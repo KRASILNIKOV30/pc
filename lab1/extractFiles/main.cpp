@@ -4,6 +4,7 @@
 #include "../WaitChildProcesses.h"
 #include <sstream>
 #include <filesystem>
+#include <gsl/gsl>
 
 struct Args
 {
@@ -23,8 +24,8 @@ Args ParseCommandLine(const int argc, char** argv)
 
 	if (mode == "-S")
 	{
-		std::string archiveName = argv[2];
-		std::string outputFolder = argv[3];
+		const std::string archiveName = argv[2];
+		const std::string outputFolder = argv[3];
 
 		return Args
 		{
@@ -36,9 +37,9 @@ Args ParseCommandLine(const int argc, char** argv)
 
 	if (mode == "-P")
 	{
-		int numProcesses = std::stoi(argv[2]);
-		std::string archiveName = argv[3];
-		std::string outputFolder = argv[4];
+		const int numProcesses = std::stoi(argv[2]);
+		const std::string archiveName = argv[3];
+		const std::string outputFolder = argv[4];
 
 		return Args
 		{
@@ -66,9 +67,17 @@ void ExtractFiles(const Args& mode)
 	Timer timer(std::cout, "ExtractFiles");
 	pid_t pid = getpid();
 	std::vector<pid_t> childPids;
+	auto finalizer = gsl::finally([&] {
+		if (pid != 0)
+		{
+			WaitChildProcesses(childPids);
+		}
+	});
 	std::vector<std::string> files;
 
+	Timer seqTimer(std::cout, "SequentialPart");
 	UnpackArchive(mode.archiveName, mode.outputFolder);
+	seqTimer.Stop();
 
 	for (const auto& file : std::filesystem::directory_iterator(mode.outputFolder))
 	{
@@ -101,6 +110,13 @@ void ExtractFiles(const Args& mode)
 		GzipFiles("-d", chunks.back());
 		WaitChildProcesses(childPids);
 		timer.Stop();
+
+		auto deleteFilesFinalizer = gsl::finally([&] {
+			for (const auto& file : std::filesystem::directory_iterator(mode.outputFolder))
+			{
+				std::remove(file.path().c_str());
+			}
+		});
 	}
 }
 
@@ -108,8 +124,12 @@ int main(const int argc, char** argv)
 {
 	try
 	{
-		const auto args = ParseCommandLine(argc, argv);
-		ExtractFiles(args);
+		auto args = ParseCommandLine(argc, argv);
+		for (int i = 0; i <= 20; ++i)
+		{
+			args.numProcesses = i;
+			ExtractFiles(args);
+		}
 	}
 	catch (const std::exception& e)
 	{

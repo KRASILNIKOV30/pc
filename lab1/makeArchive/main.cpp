@@ -3,10 +3,10 @@
 #include "../Timer.h"
 #include "../WaitChildProcesses.h"
 #include <sstream>
+#include <gsl/gsl>
 
 struct Args
 {
-
 	std::string archiveName;
 	int numProcesses;
 	std::vector<std::string> files;
@@ -73,34 +73,63 @@ void ArchiveFiles(std::string const& archiveName, std::vector<std::string> const
 	}
 }
 
-void MakeArchive(const Args& mode)
+void DeleteFiles(std::vector<std::string> const& files)
+{
+	for (const auto& file : files)
+	{
+		std::remove(file.c_str());
+	}
+}
+
+void MakeArchive(const Args& args)
 {
 	Timer timer(std::cout, "MakeArchive");
 	pid_t pid = getpid();
 	std::vector<pid_t> childPids;
-	const auto chunkSize = std::max<size_t>(mode.files.size() / (mode.numProcesses + 1), 1);
-	const auto chunks = ChunkVector(mode.files, chunkSize);
+	auto finalizer = gsl::finally([&] {
+		if (pid != 0)
+		{
+			WaitChildProcesses(childPids);
+		}
+	});
+	const auto chunkSize = std::max<size_t>(args.files.size() / (args.numProcesses + 1), 1);
+	const auto chunks = ChunkVector(args.files, chunkSize);
 	for (int i = 0; i < chunks.size() - 1 && pid != 0; i++)
 	{
 		pid = fork();
 		childPids.emplace_back(pid);
 		if (pid == -1)
 		{
+			// Если выбросится исключение, то кто-то должен дождаться завершения дочерних процессов (Исправлено)
 			throw std::runtime_error("Error forking process");
 		}
 		if (pid == 0)
 		{
-			GzipFiles("-dk", chunks.at(i));
-			exit(0);
+			GzipFiles("-k", chunks.at(i));
 		}
 	}
 
 	if (pid != 0)
 	{
-		GzipFiles("-dk", chunks.back());
+		GzipFiles("-k", chunks.back());
 		WaitChildProcesses(childPids);
-		ArchiveFiles(mode.archiveName, mode.files);
+
+		ArchiveFiles(args.archiveName, args.files);
 		timer.Stop();
+
+		std::vector<std::string> zippedFiles;
+		zippedFiles.reserve(args.files.size());
+		for (const auto& file : args.files)
+		{
+			zippedFiles.emplace_back(file + ".gz");
+		}
+
+		// В другое место и захватывать по ссылке
+		auto deleteFilesFinalizer = gsl::finally([=] {
+			// Удалить файлы в finalizer(исправлено)
+			DeleteFiles(zippedFiles);
+			DeleteFiles({ args.archiveName + ".tar" });
+		});
 	}
 }
 
@@ -108,8 +137,12 @@ int main(const int argc, char** argv)
 {
 	try
 	{
-		const auto args = ParseCommandLine(argc, argv);
-		MakeArchive(args);
+		auto args = ParseCommandLine(argc, argv);
+		for (int i = 0; i <= 20; ++i)
+		{
+			args.numProcesses = i;
+			MakeArchive(args);
+		}
 	}
 	catch (const std::exception& e)
 	{
