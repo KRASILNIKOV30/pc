@@ -118,18 +118,19 @@ void MakeArchive(const Args& args)
 		timer.Stop();
 
 		std::vector<std::string> zippedFiles;
+		// В другое место и захватывать по ссылке (Исправлено)
+		auto deleteFilesFinalizer = gsl::finally([&] {
+			// Удалить файлы в finalizer(исправлено)
+			DeleteFiles(zippedFiles);
+			DeleteFiles({ args.archiveName + ".tar" });
+		});
+
 		zippedFiles.reserve(args.files.size());
 		for (const auto& file : args.files)
 		{
 			zippedFiles.emplace_back(file + ".gz");
 		}
 
-		// В другое место и захватывать по ссылке
-		auto deleteFilesFinalizer = gsl::finally([=] {
-			// Удалить файлы в finalizer(исправлено)
-			DeleteFiles(zippedFiles);
-			DeleteFiles({ args.archiveName + ".tar" });
-		});
 	}
 }
 

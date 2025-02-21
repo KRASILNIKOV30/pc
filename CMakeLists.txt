@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.26)
-project(os)
+project(pc)
 
 set(CMAKE_CXX_STANDARD 20)
 
 enable_testing()
 
 add_subdirectory(lab1)
+add_subdirectory(lab2)
 
 add_library(catch2 INTERFACE)
 add_library(timer INTERFACE)

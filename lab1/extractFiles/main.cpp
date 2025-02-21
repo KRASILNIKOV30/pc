@@ -107,16 +107,15 @@ void ExtractFiles(const Args& mode)
 
 	if (pid != 0)
 	{
-		GzipFiles("-d", chunks.back());
-		WaitChildProcesses(childPids);
-		timer.Stop();
-
 		auto deleteFilesFinalizer = gsl::finally([&] {
 			for (const auto& file : std::filesystem::directory_iterator(mode.outputFolder))
 			{
 				std::remove(file.path().c_str());
 			}
 		});
+		GzipFiles("-d", chunks.back());
+		WaitChildProcesses(childPids);
+		timer.Stop();
 	}
 }
 
