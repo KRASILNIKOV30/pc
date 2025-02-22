@@ -17,7 +17,7 @@ void Run(GeneratorMode const& mode)
 	{
 		for (int x = 0; x < width; x++)
 		{
-			output << (Rand() >= mode.probability ? '#' : ' ');
+			output << (Rand() <= mode.probability ? '#' : ' ');
 		}
 		output << std::endl;
 	}
