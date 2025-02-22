@@ -1,4 +1,7 @@
 #include "GenerateMode.h"
+
+#include "Life.h"
+
 #include <fstream>
 
 float Rand()
@@ -17,7 +20,7 @@ void Run(GeneratorMode const& mode)
 	{
 		for (int x = 0; x < width; x++)
 		{
-			output << (Rand() <= mode.probability ? '#' : ' ');
+			output << (Rand() <= mode.probability ? LIVE_CELL : DEAD_CELL);
 		}
 		output << std::endl;
 	}

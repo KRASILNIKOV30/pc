@@ -22,12 +22,12 @@ inline Field ReadField(const std::string& inputFileName)
 
 	Cells cells;
 	cells.reserve(width * height);
-	std::string str;
-	while (std::getline(input, str))
+	char ch;
+	while (input.get(ch))
 	{
-		for (const auto& c : str)
+		if (ch == LIVE_CELL || ch == DEAD_CELL)
 		{
-			cells.emplace_back(c);
+			cells.emplace_back(ch);
 		}
 	}
 

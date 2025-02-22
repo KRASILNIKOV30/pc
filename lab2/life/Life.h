@@ -2,7 +2,7 @@
 #include <vector>
 
 constexpr char LIVE_CELL = '#';
-constexpr char DEAD_CELL = ' ';
+constexpr char DEAD_CELL = '.';
 
 struct Coordinates
 {

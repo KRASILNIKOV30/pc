@@ -11,7 +11,6 @@ Life::Life(Field field, const int threadsNum)
 {
 }
 
-
 void Life::NextStep()
 {
 	Cells result;
