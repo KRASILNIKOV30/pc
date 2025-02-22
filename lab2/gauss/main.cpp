@@ -1,15 +1,8 @@
+#include "Gauss.h"
 #include <iostream>
 #include <ostream>
 #include <stdexcept>
 #include <string>
-
-struct Args
-{
-	std::string inputFileName;
-	std::string outputFileName;
-	int radius;
-	int threadsNum;
-};
 
 Args ParseCommandLine(int argc, char* argv[])
 {
@@ -31,7 +24,8 @@ int main(const int argc, char* argv[])
 {
 	try
 	{
-		Args args = ParseCommandLine(argc, argv);
+		const Args args = ParseCommandLine(argc, argv);
+		GaussBlur(args);
 	}
 	catch (const std::exception& e)
 	{

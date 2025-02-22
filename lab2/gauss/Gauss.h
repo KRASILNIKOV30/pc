@@ -9,4 +9,4 @@ struct Args
 	int threadsNum;
 };
 
-inline void GaussBlur(Args const& args);
+void GaussBlur(Args const& args);
