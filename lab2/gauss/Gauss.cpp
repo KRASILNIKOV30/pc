@@ -4,39 +4,33 @@
 #include <cmath>
 
 // Функция для создания ядра Гаусса
-std::vector<std::vector<float>> GenerateGaussianKernel(int radius, float sigma)
+std::vector<float> GenerateGaussianKernel(int radius, float sigma)
 {
 	int size = 2 * radius + 1;
-	std::vector kernel(size, std::vector<float>(size));
+	std::vector<float> kernel(size);
 
 	float sum = 0.0f;
 	const float sigma2 = sigma * sigma;
 	const float twoSigma2 = 2.0f * sigma2;
 	const float piSigma2 = M_PI * sigma2;
 
-	for (int y = -radius; y <= radius; ++y)
+	for (int x = -radius; x <= radius; ++x)
 	{
-		for (int x = -radius; x <= radius; ++x)
-		{
-			float value = std::exp(-(x * x + y * y) / twoSigma2) / piSigma2;
-			kernel[y + radius][x + radius] = value;
-			sum += value;
-		}
+		const float value = std::exp(-(x * x) / twoSigma2) / std::sqrt(2 * piSigma2);
+		kernel[x + radius] = value;
+		sum += value;
 	}
 
-	for (int y = 0; y < size; ++y)
+	for (int x = 0; x < size; ++x)
 	{
-		for (int x = 0; x < size; ++x)
-		{
-			kernel[y][x] /= sum;
-		}
+		kernel[x] /= sum;
 	}
 
 	return kernel;
 }
 
 // разделить блюр по горизонтали и вертикали
-wxImage ApplyGaussianBlur(wxImage& img, const std::vector<std::vector<float>>& kernel, int radius)
+wxImage ApplyGaussianBlur(wxImage& img, const std::vector<float>& kernel, int radius)
 {
 	const int width = img.GetWidth();
 	const int height = img.GetHeight();
@@ -51,22 +45,41 @@ wxImage ApplyGaussianBlur(wxImage& img, const std::vector<std::vector<float>>& k
 			float g = 0.0f;
 			float b = 0.0f;
 
+			for (int kx = -radius; kx <= radius; ++kx)
+			{
+				const int px = std::min(std::max(x + kx, 0), width - 1);
+
+				const float weight = kernel[kx + radius];
+
+				r += weight * img.GetRed(px, y);
+				g += weight * img.GetGreen(px, y);
+				b += weight * img.GetBlue(px, y);
+			}
+
+			result.SetRGB(x, y,
+				std::min(std::max(static_cast<int>(r), 0), 255),
+				std::min(std::max(static_cast<int>(g), 0), 255),
+				std::min(std::max(static_cast<int>(b), 0), 255));
+		}
+	}
+
+	for (int y = 0; y < height; ++y)
+	{
+		for (int x = 0; x < width; ++x)
+		{
+			float r = 0.0f;
+			float g = 0.0f;
+			float b = 0.0f;
+
 			for (int ky = -radius; ky <= radius; ++ky)
 			{
-				for (int kx = -radius; kx <= radius; ++kx)
-				{
-					const int px = std::min(std::max(x + kx, 0), width - 1);
-					const int py = std::min(std::max(y + ky, 0), height - 1);
+				const int py = std::min(std::max(y + ky, 0), height - 1);
 
-					const float weight = kernel[ky + radius][kx + radius];
+				const float weight = kernel[ky + radius];
 
-					// r += std::pow(weight * std::pow(static_cast<float>(img.GetRed(px, py)) / 255.0, 2.2), 1.0 / 2.2) * 255;
-					// g += std::pow(weight * std::pow(static_cast<float>(img.GetGreen(px, py)) / 255.0, 2.2), 1.0 / 2.2) * 255;
-					// b += std::pow(weight * std::pow(static_cast<float>(img.GetBlue(px, py)) / 255.0, 2.2), 1.0 / 2.2) * 255;
-					r += weight * img.GetRed(px, py);
-					g += weight * img.GetGreen(px, py);
-					b += weight * img.GetBlue(px, py);
-				}
+				r += weight * img.GetRed(x, py);
+				g += weight * img.GetGreen(x, py);
+				b += weight * img.GetBlue(x, py);
 			}
 
 			result.SetRGB(x, y,
