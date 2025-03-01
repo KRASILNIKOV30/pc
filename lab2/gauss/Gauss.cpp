@@ -81,9 +81,12 @@ void GaussBlur(Args const& args)
 	}
 
 	wxImage result;
-	MeasureTime(std::cout, "Gaussian blur", [&] {
-		result = BlurParallel(img, args.radius, args.threadsNum);
-	});
+	for (int i = 20; i >= 1; --i)
+	{
+		MeasureTime(std::cout, "Gaussian blur with " + std::to_string(i) + " threads", [&] {
+			result = BlurParallel(img, args.radius, i);
+		});
+	}
 
 	if (!result.SaveFile(args.outputFileName, wxBITMAP_TYPE_JPEG))
 	{

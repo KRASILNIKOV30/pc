@@ -1,31 +1,9 @@
 #pragma once
+#include "Pixel.h"
+
 #include <functional>
 #include <vector>
 #include <wx/image.h>
-
-struct Pixel
-{
-	float r;
-	float g;
-	float b;
-
-	Pixel& operator+=(Pixel const& p)
-	{
-		r += p.r;
-		g += p.g;
-		b += p.b;
-		return *this;
-	}
-};
-
-inline Pixel operator*(Pixel const& p, float c)
-{
-	return {
-		p.r * c,
-		p.g * c,
-		p.b * c,
-	};
-}
 
 class Pixels
 {
@@ -61,9 +39,9 @@ public:
 		{
 			const auto [r, g, b] = m_data[i];
 			img.SetRGB(i % m_width, i / m_width,
-				static_cast<unsigned char>(r),
-				static_cast<unsigned char>(g),
-				static_cast<unsigned char>(b));
+				DenormalizeColor(r),
+				DenormalizeColor(g),
+				DenormalizeColor(b));
 		}
 
 		return img;
@@ -88,12 +66,22 @@ private:
 			for (int x = 0; x < m_width; x++)
 			{
 				m_data.emplace_back(Pixel{
-					static_cast<float>(img.GetRed(x, y)),
-					static_cast<float>(img.GetGreen(x, y)),
-					static_cast<float>(img.GetBlue(x, y)),
+					NormalizeColor(img.GetRed(x, y)),
+					NormalizeColor(img.GetGreen(x, y)),
+					NormalizeColor(img.GetBlue(x, y)),
 				});
 			}
 		}
+	}
+
+	static float NormalizeColor(const unsigned char c)
+	{
+		return std::pow(static_cast<float>(c) / 255, 2.2);
+	}
+
+	static unsigned char DenormalizeColor(const float c)
+	{
+		return static_cast<unsigned char>(std::pow(c, 1.0 / 2.2) * 255);
 	}
 
 private:
