@@ -6,7 +6,7 @@
 #include <wx/wx.h>
 
 // разделить блюр по горизонтали и вертикали (исправлено)
-Pixels ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel, const int radius, const int start, const int end)
+void ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel, const int radius, const int start, const int end, Pixels& result)
 {
 	const auto width = pixels.GetWidth();
 	const auto height = pixels.GetHeight();
@@ -25,7 +25,6 @@ Pixels ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel,
 		horizontalBlur.Set(x, y, newPixel);
 	}
 
-	Pixels verticalBlur(width, height);
 	for (int i = start; i < end; i++)
 	{
 		const int x = i % width;
@@ -37,10 +36,22 @@ Pixels ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel,
 			const float weight = kernel[ky + radius];
 			newPixel += horizontalBlur.Get(x, py) * weight;
 		}
-		verticalBlur.Set(x, y, newPixel);
+		result.Set(x, y, newPixel);
 	}
+}
 
-	return verticalBlur;
+wxImage BlurParallel(wxImage const& img, const int radius, const int threadsNum)
+{
+	const auto sigma = radius / 3.29;
+	const auto kernel = GenerateGaussianKernel(radius, sigma);
+
+	const Pixels pixels(img);
+	const int width = pixels.GetWidth();
+	const int height = pixels.GetHeight();
+	Pixels result(width, height);
+	ApplyGaussianBlur(pixels, kernel, radius, 0, width * height, result);
+
+	return result.GetImage();
 }
 
 void GaussBlur(Args const& args)
@@ -59,16 +70,9 @@ void GaussBlur(Args const& args)
 		throw std::runtime_error("Image loading failed.");
 	}
 
-	const int radius = args.radius;
-	const auto sigma = radius / 3.29;
+	const auto result = BlurParallel(img, args.radius, args.threadsNum);
 
-	const auto kernel = GenerateGaussianKernel(radius, sigma);
-	Pixels pixels(img);
-	const int width = pixels.GetWidth();
-	const int height = pixels.GetHeight();
-	const auto result = ApplyGaussianBlur(pixels, kernel, radius, 0, width * height);
-
-	if (!result.GetImage().SaveFile(args.outputFileName, wxBITMAP_TYPE_PNG))
+	if (!result.SaveFile(args.outputFileName, wxBITMAP_TYPE_PNG))
 	{
 		throw std::runtime_error("Failed to save image.");
 	}
