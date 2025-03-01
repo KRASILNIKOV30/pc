@@ -1,16 +1,14 @@
 #include "Gauss.h"
-
 #include "GaussianKernel.h"
+#include "Parallel.h"
 #include "Pixels.h"
+#include "../../lib/timer/Timer.h"
 #include <cmath>
 #include <wx/wx.h>
 
-// разделить блюр по горизонтали и вертикали (исправлено)
-void ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel, const int radius, const int start, const int end, Pixels& result)
+void ApplyHorizontalBlur(const Pixels& pixels, const std::vector<float>& kernel, const int radius, const int start, const int end, Pixels& result)
 {
 	const auto width = pixels.GetWidth();
-	const auto height = pixels.GetHeight();
-	Pixels horizontalBlur(width, height);
 	for (int i = start; i < end; i++)
 	{
 		const int x = i % width;
@@ -22,9 +20,14 @@ void ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel, c
 			const float weight = kernel[kx + radius];
 			newPixel += pixels.Get(px, y) * weight;
 		}
-		horizontalBlur.Set(x, y, newPixel);
+		result.Set(x, y, newPixel);
 	}
+}
 
+void ApplyVerticalBlur(const Pixels& pixels, const std::vector<float>& kernel, const int radius, const int start, const int end, Pixels& result)
+{
+	const auto width = pixels.GetWidth();
+	const auto height = pixels.GetHeight();
 	for (int i = start; i < end; i++)
 	{
 		const int x = i % width;
@@ -34,7 +37,7 @@ void ApplyGaussianBlur(const Pixels& pixels, const std::vector<float>& kernel, c
 		{
 			const int py = std::min(std::max(y + ky, 0), height - 1);
 			const float weight = kernel[ky + radius];
-			newPixel += horizontalBlur.Get(x, py) * weight;
+			newPixel += pixels.Get(x, py) * weight;
 		}
 		result.Set(x, y, newPixel);
 	}
@@ -48,8 +51,15 @@ wxImage BlurParallel(wxImage const& img, const int radius, const int threadsNum)
 	const Pixels pixels(img);
 	const int width = pixels.GetWidth();
 	const int height = pixels.GetHeight();
+
+	Pixels horizontalBlur(width, height);
+	ComputeParallel(width * height, threadsNum, [&](const size_t start, const size_t end) {
+		ApplyHorizontalBlur(pixels, kernel, radius, start, end, horizontalBlur);
+	});
 	Pixels result(width, height);
-	ApplyGaussianBlur(pixels, kernel, radius, 0, width * height, result);
+	ComputeParallel(width * height, threadsNum, [&](const size_t start, const size_t end) {
+		ApplyVerticalBlur(horizontalBlur, kernel, radius, start, end, result);
+	});
 
 	return result.GetImage();
 }
@@ -57,22 +67,25 @@ wxImage BlurParallel(wxImage const& img, const int radius, const int threadsNum)
 void GaussBlur(Args const& args)
 {
 	wxInitializer wxInit;
-	wxImage::AddHandler(new wxPNGHandler());
+	wxImage::AddHandler(new wxJPEGHandler());
 
 	if (!wxInit)
 	{
 		throw std::runtime_error("Failed to initialize wxWidgets.");
 	}
 
-	const wxImage img(args.inputFileName, wxBITMAP_TYPE_PNG);
+	const wxImage img(args.inputFileName, wxBITMAP_TYPE_JPEG);
 	if (!img.IsOk())
 	{
 		throw std::runtime_error("Image loading failed.");
 	}
 
-	const auto result = BlurParallel(img, args.radius, args.threadsNum);
+	wxImage result;
+	MeasureTime(std::cout, "Gaussian blur", [&] {
+		result = BlurParallel(img, args.radius, args.threadsNum);
+	});
 
-	if (!result.SaveFile(args.outputFileName, wxBITMAP_TYPE_PNG))
+	if (!result.SaveFile(args.outputFileName, wxBITMAP_TYPE_JPEG))
 	{
 		throw std::runtime_error("Failed to save image.");
 	}

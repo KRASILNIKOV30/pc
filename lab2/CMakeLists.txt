@@ -13,6 +13,7 @@ add_executable(gauss
         gauss/Gauss.cpp
         gauss/Pixels.h
         gauss/GaussianKernel.h
+        gauss/Parallel.h
 )
 
 find_package(wxWidgets REQUIRED COMPONENTS core base)

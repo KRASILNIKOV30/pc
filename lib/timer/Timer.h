@@ -31,6 +31,11 @@ public:
 		}
 	}
 
+	~Timer()
+	{
+		Stop();
+	}
+
 private:
 	std::ostream& m_output;
 	std::string m_name;
@@ -38,7 +43,7 @@ private:
 	bool m_running = true;
 };
 
-template<typename Fn, typename... Args>
+template <typename Fn, typename... Args>
 decltype(auto) MeasureTime(std::ostream& output, std::string name, Fn&& fn, Args&&... args)
 {
 	Timer t{ output, std::move(name) };
