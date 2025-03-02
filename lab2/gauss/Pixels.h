@@ -1,10 +1,9 @@
 #pragma once
 #include "Pixel.h"
-
-#include <functional>
 #include <vector>
 #include <wx/image.h>
 
+// транспонировать по настоящему
 class Pixels
 {
 public:
@@ -24,11 +23,22 @@ public:
 
 	void Set(const int x, const int y, Pixel const& pixel)
 	{
-		m_data[y * m_width + x] = pixel;
+		if (m_transposed)
+		{
+			m_data[x * m_width + y] = pixel;
+		}
+		else
+		{
+			m_data[y * m_width + x] = pixel;
+		}
 	}
 
 	[[nodiscard]] Pixel Get(const int x, const int y) const
 	{
+		if (m_transposed)
+		{
+			return m_data[x * m_width + y];
+		}
 		return m_data[y * m_width + x];
 	}
 
@@ -49,12 +59,17 @@ public:
 
 	[[nodiscard]] int GetWidth() const
 	{
-		return m_width;
+		return m_transposed ? m_height : m_width;
 	}
 
 	[[nodiscard]] int GetHeight() const
 	{
-		return m_height;
+		return m_transposed ? m_width : m_height;
+	}
+
+	void Transpose()
+	{
+		m_transposed = !m_transposed;
 	}
 
 private:
@@ -88,4 +103,5 @@ private:
 	int m_width;
 	int m_height;
 	std::vector<Pixel> m_data;
+	bool m_transposed = false;
 };
