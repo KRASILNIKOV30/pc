@@ -65,6 +65,7 @@ public:
 	// Возвращает количество наличных денег в обороте
 	[[nodiscard]] Money GetCash() const
 	{
+		// выяснить, надо ли ьрать bankMuetx
 		std::shared_lock lock(m_cashMutex);
 		return m_cash;
 	}
@@ -132,7 +133,7 @@ public:
 	{
 		std::unique_lock bankLock(m_bankMutex);
 		const auto id = m_nextAccountId++;
-		m_accounts.insert_or_assign(id, Account{});
+		m_accounts.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
 		m_operationsCount.fetch_add(1);
 
 		return id;
@@ -183,13 +184,16 @@ private:
 		return true;
 	}
 
+	// Определить WithdrawMoney через TryWithdrawMoney
 	bool WithdrawMoneyInternal(AccountId accountId, Money amount, bool throwOnError)
 	{
 		EnsureNotNegative(amount);
 		std::shared_lock bankLock(m_bankMutex);
+		// возвращать итератор
 		EnsureExist(accountId);
 		auto& [balance, mutex] = m_accounts.at(accountId);
 		std::unique_lock accountLock(mutex);
+		// проверить граничные условия
 		if (balance < amount)
 		{
 			if (throwOnError)
@@ -236,13 +240,13 @@ private:
 	struct Account
 	{
 		Money balance = 0;
-		std::shared_mutex mutex{};
+		mutable std::shared_mutex mutex;
 	};
 
 	Money m_cash;
 	std::atomic<unsigned long long> m_operationsCount;
 	std::unordered_map<AccountId, Account> m_accounts;
-	std::shared_mutex m_cashMutex;
-	std::shared_mutex m_bankMutex;
+	mutable std::shared_mutex m_cashMutex;
+	mutable std::shared_mutex m_bankMutex;
 	AccountId m_nextAccountId = 0;
 };

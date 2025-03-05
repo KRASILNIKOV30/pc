@@ -1,10 +1,15 @@
 add_executable(bank
-        bank.cpp
-        bank.h
+        Bank.h
+        CharactersBase.h
+        Characters.h
+        Simulation.h
+        main.cpp
 )
 
 add_executable(bank_tests
-        tests/bank_tests.cpp
+        Bank.h
+        tests/Bank_tests.cpp
 )
 
+set_target_properties(bank PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(bank_tests PUBLIC catch2)
