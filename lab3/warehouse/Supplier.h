@@ -28,9 +28,8 @@ public:
 			{
 				std::osyncstream(std::cout) << "Supplier " << m_id << " can not added goods" << std::endl;
 			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
+		std::osyncstream(std::cout) << "Supplier " << m_id << " added goods: " << m_totalAdded << std::endl;
 	}
 
 private:
