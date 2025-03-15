@@ -1,5 +1,5 @@
 #pragma once
-#include "CharactersBase.h"
+#include "../CharactersBase.h"
 
 #include <thread>
 
