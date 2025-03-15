@@ -2,7 +2,7 @@
 #include <functional>
 #include <thread>
 
-inline void ComputeParallel(const size_t size, const int threadsNum, std::function<void(size_t start, size_t end)> callback)
+inline void ComputeParallel(const size_t size, const int threadsNum, std::function<void(size_t start, size_t end)> const& callback)
 {
 	const auto blockSize = size / threadsNum;
 	{
