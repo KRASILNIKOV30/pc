@@ -25,7 +25,7 @@ public:
 				std::osyncstream(std::cout) << "Clients " << m_id << " can not remove goods" << std::endl;
 			}
 		}
-		std::osyncstream(std::cout) << "Client " << m_id << " removed goods: " << m_totalRemoved << std::endl;
+		std::osyncstream(std::cout) << "Total client " << m_id << " removed goods: " << m_totalRemoved << std::endl;
 	}
 
 private:

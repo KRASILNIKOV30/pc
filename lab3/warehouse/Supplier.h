@@ -29,7 +29,7 @@ public:
 				std::osyncstream(std::cout) << "Supplier " << m_id << " can not added goods" << std::endl;
 			}
 		}
-		std::osyncstream(std::cout) << "Supplier " << m_id << " added goods: " << m_totalAdded << std::endl;
+		std::osyncstream(std::cout) << "Total supplier " << m_id << " added goods: " << m_totalAdded << std::endl;
 	}
 
 private:
