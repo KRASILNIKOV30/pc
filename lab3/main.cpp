@@ -1,4 +1,3 @@
-#include <chrono>
 #include "Simulation.h"
 
 int main(const int argc, char* argv[])

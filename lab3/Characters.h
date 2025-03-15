@@ -126,10 +126,18 @@ public:
 			Log("Burns paid salary to Homer.");
 		}
 
-		if (SendMoney(characters.smithers->GetAccountId(), 500))
+		try
 		{
-			Log("Burns paid salary to Smithers.");
+			if (SendMoney(characters.smithers->GetAccountId(), 500))
+			{
+				Log("Burns paid salary to Smithers.");
+			}
 		}
+		catch (BankOperationError const&)
+		{
+			Log("Burns failed to paid salary to Smithers.");
+		}
+
 	}
 };
 

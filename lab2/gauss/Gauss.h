@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <wx/wx.h>
 
 struct Args
 {
@@ -10,3 +11,4 @@ struct Args
 };
 
 void GaussBlur(Args const& args);
+wxImage BlurParallel(wxImage const& img, int radius, int threadsNum);

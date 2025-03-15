@@ -1,8 +1,17 @@
 #pragma once
 #include "Bank.h"
 #include "Characters.h"
+
+#include <csignal>
 #include <memory>
 #include <vector>
+
+inline std::atomic stopFlag = false;
+
+inline void SignalHandler(int signum)
+{
+	stopFlag.store(true);
+}
 
 class Simulation
 {
@@ -11,6 +20,8 @@ public:
 		: m_multiThreaded(multiThreaded)
 		  , m_log(log)
 	{
+		std::signal(SIGTERM, SignalHandler);
+
 		m_bank = std::make_unique<Bank>(m_initialCash); // Начальное количество наличных
 		m_homerAccount = m_bank->OpenAccount();
 		m_margeAccount = m_bank->OpenAccount();
@@ -45,19 +56,19 @@ public:
 		if (m_multiThreaded)
 		{
 			std::vector<std::jthread> threads;
-			threads.emplace_back(&Homer::Run, m_homer.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Marge::Run, m_marge.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Bart::Run, m_bart.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Lisa::Run, m_lisa.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Apu::Run, m_apu.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Burns::Run, m_burns.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Nelson::Run, m_nelson.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Snake::Run, m_snake.get(), std::ref(m_stopFlag));
-			threads.emplace_back(&Smithers::Run, m_smithers.get(), std::ref(m_stopFlag));
+			threads.emplace_back(&Homer::Run, m_homer.get(), std::ref(stopFlag));
+			threads.emplace_back(&Marge::Run, m_marge.get(), std::ref(stopFlag));
+			threads.emplace_back(&Bart::Run, m_bart.get(), std::ref(stopFlag));
+			threads.emplace_back(&Lisa::Run, m_lisa.get(), std::ref(stopFlag));
+			threads.emplace_back(&Apu::Run, m_apu.get(), std::ref(stopFlag));
+			threads.emplace_back(&Burns::Run, m_burns.get(), std::ref(stopFlag));
+			threads.emplace_back(&Nelson::Run, m_nelson.get(), std::ref(stopFlag));
+			threads.emplace_back(&Snake::Run, m_snake.get(), std::ref(stopFlag));
+			threads.emplace_back(&Smithers::Run, m_smithers.get(), std::ref(stopFlag));
 		}
 		else
 		{
-			while (!m_stopFlag.load())
+			while (!stopFlag.load())
 			{
 				m_homer->Step(m_characters);
 				m_marge->Step(m_characters);
@@ -68,16 +79,12 @@ public:
 				m_nelson->Step(m_characters);
 				m_snake->Step(m_characters);
 				m_smithers->Step(m_characters);
+				std::this_thread::sleep_for(std::chrono::seconds(1));
 			}
 		}
 
 		std::cout << "Total bank operations: " << m_bank->GetOperationsCount() << std::endl;
 		std::cout << (IsConsistent() ? "OK" : "FAIL") << std::endl;
-	}
-
-	void Stop()
-	{
-		m_stopFlag.store(true);
 	}
 
 private:
@@ -119,7 +126,6 @@ private:
 private:
 	bool m_multiThreaded;
 	bool m_log;
-	std::atomic<bool> m_stopFlag;
 	std::unique_ptr<Bank> m_bank;
 	AccountId m_homerAccount;
 	AccountId m_margeAccount;
