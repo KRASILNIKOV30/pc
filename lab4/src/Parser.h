@@ -33,28 +33,29 @@ public:
 	{
 		std::vector<Chord> chords;
 		std::string line;
+		const std::regex noteRegex(R"(([A-G]#?\d-?)|(-))");
 
 		while (std::getline(mInputStream, line))
 		{
 			if (line == "END")
-				break;
-
-			Chord chord;
-			const std::regex noteRegex(R"(([A-G]#?\d-?)|(-))");
-			const auto notesBegin = std::sregex_iterator(line.begin(), line.end(), noteRegex);
-			const auto notesEnd = std::sregex_iterator();
-
-			size_t noteIndex = 0;
-			for (auto it = notesBegin; it != notesEnd; ++it, ++noteIndex)
 			{
-				const auto& match = *it;
-				const auto noteStr = match.str();
-				chord.push_back(ParseNoteOrDim(noteStr, noteIndex));
+				break;
 			}
 
+			std::erase_if(line, ::isspace);
+			std::istringstream lineStream(line);
+			std::string noteStr;
+			Chord chord;
+			size_t noteIndex = 0;
+			while (std::getline(lineStream, noteStr, '|'))
+			{
+				chord.push_back(ParseNoteOrDim(noteStr, noteIndex));
+				++noteIndex;
+			}
+
+			chords.push_back(chord);
 			if (!chord.empty())
 			{
-				chords.push_back(chord);
 				m_previousChord = chord;
 			}
 		}
