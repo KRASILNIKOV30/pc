@@ -8,8 +8,10 @@ enable_testing()
 add_subdirectory(lab1)
 add_subdirectory(lab2)
 add_subdirectory(lab3)
+add_subdirectory(lab4)
 
-add_library(catch2 INTERFACE)
+add_library(catch2 INTERFACE
+        lab4/miniaudio.c)
 add_library(timer INTERFACE)
 add_library(coutBuffer INTERFACE)
 
