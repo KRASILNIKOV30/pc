@@ -9,7 +9,7 @@ constexpr int FIRST_OCTAVE_INDEX = 4;
 class ChordGenerator
 {
 public:
-	ChordGenerator(ma_uint32 sampleRate, int bpm, std::vector<Chord> const& chords, ma_float amplitude = 1.f)
+	ChordGenerator(ma_uint32 sampleRate, unsigned bpm, std::vector<Chord> const& chords, ma_float amplitude = 1.f)
 		: m_sampleRate(sampleRate)
 		  , m_chords(chords)
 		  , m_amplitude(amplitude)
