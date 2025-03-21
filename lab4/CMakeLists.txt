@@ -1,7 +1,13 @@
 add_executable(audio_player
-        "audio_player.cpp"
-        "miniaudio.c"
-        "miniaudio.h")
+        main.cpp
+        lib/miniaudio.c
+        lib/miniaudio.h
+        src/ErrorCategory.h
+        src/Device.h
+        src/Player.h
+        src/SineWaveGenerator.h
+        src/Chord.h
+        src/ChordsGenerator.h)
 
 set_property(TARGET audio_player PROPERTY CXX_STANDARD 20)
 
