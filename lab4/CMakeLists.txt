@@ -7,7 +7,8 @@ add_executable(audio_player
         src/Player.h
         src/SineWaveGenerator.h
         src/Chord.h
-        src/ChordsGenerator.h)
+        src/ChordsGenerator.h
+        src/Parser.h)
 
 set_property(TARGET audio_player PROPERTY CXX_STANDARD 20)
 

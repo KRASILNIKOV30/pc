@@ -1,33 +1,57 @@
 ﻿#include "src/ChordsGenerator.h"
+#include "src/Parser.h"
 #include "src/Player.h"
 #include <iostream>
 #include <span>
+#include <fstream>
 
-int main()
+struct Args
 {
-	Player player(ma_format_f32, 1);
+	std::string inputFileName;
+};
 
-	ChordGenerator chordGenerator(player.GetSampleRate(), 120, {
-		{ { C, 1 } },
-		{ { D, 1 } },
-		{ { E, 1 } },
-		{ { F, 1 } },
-		{ { G, 1 } },
-		{ { A, 1 } },
-		{ { B, 1 } },
-		{ { C, 2 } },
-	}, 1.f);
+Args ParseArgs(int argc, char* argv[])
+{
+	if (argc != 2)
+	{
+		throw std::runtime_error("Wrong number of arguments");
+	}
 
-	player.SetDataCallback([&chordGenerator](void* output, ma_uint32 frameCount) mutable {
-		auto samples = std::span(static_cast<ma_float*>(output), frameCount);
-		for (auto& sample : samples)
-		{
-			sample = chordGenerator.GetNextSample();
-		}
-	});
+	return {
+		.inputFileName = argv[1]
+	};
+}
 
-	player.Start();
+int main(int argc, char* argv[])
+{
+	try
+	{
+		const auto [inputFileName] = ParseArgs(argc, argv);
+		std::ifstream input(inputFileName);
+		Parser parser(input);
+		const auto bpm = parser.GetBpm();
+		const auto chords = parser.GetChords();
+		Player player(ma_format_f32, 1);
+		ChordGenerator chordGenerator(player.GetSampleRate(), bpm, chords, 1.f);
 
-	std::string s;
-	std::getline(std::cin, s);
+		player.SetDataCallback([&chordGenerator](void* output, ma_uint32 frameCount) mutable {
+			auto samples = std::span(static_cast<ma_float*>(output), frameCount);
+			for (auto& sample : samples)
+			{
+				sample = chordGenerator.GetNextSample();
+			}
+		});
+
+		player.Start();
+
+		std::string s;
+		std::getline(std::cin, s);
+	}
+	catch (std::exception const& e)
+	{
+		std::cout << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
 }
