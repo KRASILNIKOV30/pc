@@ -26,11 +26,12 @@ Args ParseArgs(int argc, char* argv[])
 	};
 }
 
-void SetPlayerDataCallback(Player& player, ChordGenerator& chordGenerator, sf::VertexArray& waveform)
+void SetPlayerDataCallback(Player& player, ChordGenerator& chordGenerator, sf::VertexArray& waveform, std::mutex& mutex)
 {
 	player.SetDataCallback([&](void* output, ma_uint32 frameCount) mutable {
 		auto samples = std::span(static_cast<ma_float*>(output), frameCount);
 		size_t i = 0;
+		std::lock_guard lock(mutex);
 		for (auto& sample : samples)
 		{
 			sample = chordGenerator.GetNextSample();
@@ -43,7 +44,7 @@ void SetPlayerDataCallback(Player& player, ChordGenerator& chordGenerator, sf::V
 	});
 }
 
-void RunVisualization(sf::RenderWindow& window, sf::VertexArray const& waveform)
+void RunVisualization(sf::RenderWindow& window, sf::VertexArray const& waveform, std::mutex& mutex)
 {
 	while (window.isOpen())
 	{
@@ -57,7 +58,10 @@ void RunVisualization(sf::RenderWindow& window, sf::VertexArray const& waveform)
 		}
 
 		window.clear();
-		window.draw(waveform);
+		{
+			std::lock_guard lock(mutex);
+			window.draw(waveform);
+		}
 		window.display();
 	}
 }
@@ -75,6 +79,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
+		std::mutex mutex{};
 		sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Sound Wave Visualization");
 		sf::VertexArray waveform(sf::LineStrip, WINDOW_WIDTH);
 
@@ -84,9 +89,9 @@ int main(int argc, char* argv[])
 		Player player(ma_format_f32, 1);
 		auto chordGenerator = InitChordGenerator(input, player.GetSampleRate());
 
-		SetPlayerDataCallback(player, chordGenerator, waveform);
+		SetPlayerDataCallback(player, chordGenerator, waveform, mutex);
 		player.Start();
-		RunVisualization(window, waveform);
+		RunVisualization(window, waveform, mutex);
 	}
 	catch (std::exception const& e)
 	{
