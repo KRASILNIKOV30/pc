@@ -1,9 +1,8 @@
 #pragma once
+#include "Epsilon.h"
 #include "WaveGenerator.h"
 #include <cmath>
 #include <numbers>
-
-constexpr float EPSILON = 1.e-4f;
 
 class SineWaveGenerator final : public WaveGenerator
 {

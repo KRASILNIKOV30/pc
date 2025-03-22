@@ -12,7 +12,8 @@ add_executable(audio-player
         src/ChordsGenerator.h
         src/Parser.h
         src/waves/WaveGenerator.h
-        src/waves/PulseWaveGenerator.h)
+        src/waves/PulseWaveGenerator.h
+        src/waves/Epsilon.h)
 
 set_property(TARGET audio-player PROPERTY CXX_STANDARD 20)
 

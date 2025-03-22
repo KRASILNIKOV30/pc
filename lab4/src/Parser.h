@@ -8,7 +8,7 @@ class Parser
 {
 public:
 	explicit Parser(std::istream& inputStream)
-		: mInputStream(inputStream)
+		: m_inputStream(inputStream)
 	{
 		// распарсить здесь (исправлено)
 		ParseFile();
@@ -24,17 +24,23 @@ public:
 		return m_chords;
 	}
 
+	[[nodiscard]] std::string GetType() const
+	{
+		return m_type;
+	}
+
 private:
 	void ParseFile()
 	{
 		ParseBpm();
+		ParseType();
 		ParseChords();
 	}
 
 	void ParseBpm()
 	{
 		std::string line;
-		if (std::getline(mInputStream, line))
+		if (std::getline(m_inputStream, line))
 		{
 			try
 			{
@@ -49,12 +55,23 @@ private:
 		throw std::runtime_error("No BPM found");
 	}
 
+	void ParseType()
+	{
+		std::string line;
+		if (std::getline(m_inputStream, line))
+		{
+			m_type = line;
+			return;
+		}
+		throw std::runtime_error("No type found");
+	}
+
 	void ParseChords()
 	{
 		std::string line;
 		const std::regex noteRegex(R"(([A-G]#?\d-?)|(-))");
 
-		while (std::getline(mInputStream, line))
+		while (std::getline(m_inputStream, line))
 		{
 			if (line == "END")
 			{
@@ -145,8 +162,9 @@ private:
 	}
 
 private:
-	std::istream& mInputStream;
+	std::istream& m_inputStream;
 	std::optional<Chord> m_previousChord;
 	unsigned m_bpm = 0;
 	std::vector<Chord> m_chords;
+	std::string m_type;
 };

@@ -71,8 +71,9 @@ ChordGenerator InitChordGenerator(std::istream& input, ma_uint32 sampleRate)
 	const Parser parser(input);
 	const auto bpm = parser.GetBpm();
 	const auto chords = parser.GetChords();
+	const auto type = parser.GetType();
 
-	return { sampleRate, bpm, chords, 1.f };
+	return { sampleRate, bpm, chords, type, 1.f };
 }
 
 int main(int argc, char* argv[])
