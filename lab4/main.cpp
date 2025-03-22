@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
 		const auto [inputFileName] = ParseArgs(argc, argv);
 		std::ifstream input(inputFileName);
-		Parser parser(input);
+		const Parser parser(input);
 		const auto bpm = parser.GetBpm();
 		const auto chords = parser.GetChords();
 		Player player(ma_format_f32, 1);

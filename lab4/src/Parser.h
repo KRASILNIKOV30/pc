@@ -10,17 +10,36 @@ public:
 	explicit Parser(std::istream& inputStream)
 		: mInputStream(inputStream)
 	{
-		// распарсить здесь
+		// распарсить здесь (исправлено)
+		ParseFile();
 	}
 
 	[[nodiscard]] unsigned GetBpm() const
+	{
+		return m_bpm;
+	}
+
+	[[nodiscard]] std::vector<Chord> GetChords() const
+	{
+		return m_chords;
+	}
+
+private:
+	void ParseFile()
+	{
+		ParseBpm();
+		ParseChords();
+	}
+
+	void ParseBpm()
 	{
 		std::string line;
 		if (std::getline(mInputStream, line))
 		{
 			try
 			{
-				return std::stoi(line);
+				m_bpm = std::stoi(line);
+				return;
 			}
 			catch (const std::exception&)
 			{
@@ -30,9 +49,8 @@ public:
 		throw std::runtime_error("No BPM found");
 	}
 
-	[[nodiscard]] std::vector<Chord> GetChords()
+	void ParseChords()
 	{
-		std::vector<Chord> chords;
 		std::string line;
 		const std::regex noteRegex(R"(([A-G]#?\d-?)|(-))");
 
@@ -54,17 +72,14 @@ public:
 				++noteIndex;
 			}
 
-			chords.push_back(chord);
+			m_chords.push_back(chord);
 			if (!chord.empty())
 			{
 				m_previousChord = chord;
 			}
 		}
-
-		return chords;
 	}
 
-private:
 	[[nodiscard]] Note ParseNoteOrDim(const std::string& noteStr, size_t noteIndex) const
 	{
 		if (noteStr == "-")
@@ -132,4 +147,6 @@ private:
 private:
 	std::istream& mInputStream;
 	std::optional<Chord> m_previousChord;
+	unsigned m_bpm = 0;
+	std::vector<Chord> m_chords;
 };
