@@ -19,17 +19,21 @@ public:
 
 	ma_float GetNextSample() override
 	{
-		constexpr auto pi = std::numbers::pi;
+		constexpr float pi = std::numbers::pi;
 		constexpr auto twoPi = static_cast<ma_float>(2.f * std::numbers::pi);
 		m_phase = std::fmod(m_phase + m_phaseShift, twoPi);
 		ma_float sample;
-		if (m_phase < pi)
+		if (m_phase < pi / 2.f)
 		{
-			sample = m_amplitude * (m_phase / pi * 2.f - 1.f);
+			sample = m_amplitude * (m_phase / (pi / 2));
+		}
+		else if (m_phase > 1.5f * pi)
+		{
+			sample = m_amplitude * ((m_phase - 1.5f * pi) / (pi / 2.f) - 1.f);
 		}
 		else
 		{
-			sample = m_amplitude * (1.f - (m_phase - pi) / pi * 2.f);
+			sample = m_amplitude * (1.f - (m_phase - pi / 2) / pi * 2.f);
 		}
 
 		m_amplitude += m_amplitudeDelta;

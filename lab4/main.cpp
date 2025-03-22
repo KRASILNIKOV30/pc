@@ -6,7 +6,7 @@
 #include <fstream>
 #include <SFML/Graphics.hpp>
 
-constexpr int WINDOW_WIDTH = 1400;
+constexpr int WINDOW_WIDTH = 1700;
 constexpr int WINDOW_HEIGHT = 600;
 
 struct Args
@@ -26,25 +26,23 @@ Args ParseArgs(int argc, char* argv[])
 	};
 }
 
-void SetPlayerDataCallback(Player& player, ChordGenerator& chordGenerator, sf::VertexArray& waveform, std::mutex& mutex)
+void SetPlayerDataCallback(Player& player, ChordGenerator& chordGenerator, std::vector<float>& samplesBuffer, std::mutex& mutex)
 {
 	player.SetDataCallback([&](void* output, ma_uint32 frameCount) mutable {
 		auto samples = std::span(static_cast<ma_float*>(output), frameCount);
-		size_t i = 0;
-		std::lock_guard lock(mutex);
+		std::vector<float> newSamples;
+		newSamples.reserve(samples.size());
 		for (auto& sample : samples)
 		{
 			sample = chordGenerator.GetNextSample();
-			if (i < waveform.getVertexCount())
-			{
-				waveform[i].position = sf::Vector2f(static_cast<float>(i), static_cast<float>(WINDOW_HEIGHT) / 2 + sample * 200);
-			}
-			++i;
+			newSamples.push_back(sample);
 		}
+		std::lock_guard lock(mutex);
+		std::swap(samplesBuffer, newSamples);
 	});
 }
 
-void RunVisualization(sf::RenderWindow& window, sf::VertexArray const& waveform, std::mutex& mutex)
+void RunVisualization(sf::RenderWindow& window, std::vector<float> const& samples, std::mutex& mutex)
 {
 	while (window.isOpen())
 	{
@@ -58,8 +56,17 @@ void RunVisualization(sf::RenderWindow& window, sf::VertexArray const& waveform,
 		}
 
 		window.clear();
+
 		{
 			std::lock_guard lock(mutex);
+			const auto size = samples.size();
+			sf::VertexArray waveform(sf::LineStrip, size);
+			for (size_t i = 0; i < size; ++i)
+			{
+				const auto x = static_cast<float>(WINDOW_WIDTH) / static_cast<float>(size);
+				const auto y = static_cast<float>(WINDOW_HEIGHT) / 2 + samples[i] * 200;
+				waveform[i].position = sf::Vector2f(x * static_cast<float>(i), y);
+			}
 			window.draw(waveform);
 		}
 		window.display();
@@ -81,6 +88,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		std::mutex mutex{};
+		std::vector<float> samples;
 		sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Sound Wave Visualization");
 		sf::VertexArray waveform(sf::LineStrip, WINDOW_WIDTH);
 
@@ -90,9 +98,9 @@ int main(int argc, char* argv[])
 		Player player(ma_format_f32, 1);
 		auto chordGenerator = InitChordGenerator(input, player.GetSampleRate());
 
-		SetPlayerDataCallback(player, chordGenerator, waveform, mutex);
+		SetPlayerDataCallback(player, chordGenerator, samples, mutex);
 		player.Start();
-		RunVisualization(window, waveform, mutex);
+		RunVisualization(window, samples, mutex);
 	}
 	catch (std::exception const& e)
 	{
