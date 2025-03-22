@@ -10,6 +10,7 @@ public:
 	explicit Parser(std::istream& inputStream)
 		: mInputStream(inputStream)
 	{
+		// распарсить здесь
 	}
 
 	[[nodiscard]] unsigned GetBpm() const

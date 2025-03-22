@@ -1,19 +1,14 @@
 #pragma once
 #include "WaveGenerator.h"
-#include <cmath>
 #include <numbers>
 
-constexpr float EPSILON = 1.e-4f;
-
-class SineWaveGenerator final : public WaveGenerator
+class PulseWaveGenerator final : public WaveGenerator
 {
-public:
-	SineWaveGenerator(ma_uint32 sampleRate, ma_float frequency, ma_float amplitude, ma_float amplitudeDelta, ma_float startPhase)
+	PulseWaveGenerator(ma_uint32 sampleRate, ma_float frequency, ma_float amplitude, ma_float amplitudeDelta)
 		: m_sampleRate{ sampleRate }
 		  , m_frequency{ frequency }
 		  , m_amplitude{ amplitude }
 		  , m_amplitudeDelta(amplitudeDelta)
-		  , m_phase(startPhase)
 	{
 	}
 
@@ -26,11 +21,6 @@ public:
 		m_amplitude += m_amplitudeDelta;
 
 		return sample;
-	}
-
-	[[nodiscard]] ma_float GetPhase() const override
-	{
-		return std::abs(m_amplitude) < EPSILON ? 0.f : m_phase;
 	}
 
 private:

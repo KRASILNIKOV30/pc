@@ -2,6 +2,8 @@
 #include "waves/SineWaveGenerator.h"
 #include "Chord.h"
 
+#include <optional>
+
 constexpr int SECONDS_PER_MINUTE = 60;
 constexpr ma_float A440 = 440;
 constexpr int FIRST_OCTAVE_INDEX = 4;
@@ -9,6 +11,7 @@ constexpr int FIRST_OCTAVE_INDEX = 4;
 class ChordGenerator
 {
 public:
+	// Устранить разрыв по фазе
 	ChordGenerator(ma_uint32 sampleRate, unsigned bpm, std::vector<Chord> const& chords, ma_float amplitude = 1.f)
 		: m_sampleRate(sampleRate)
 		  , m_chords(chords)
@@ -54,13 +57,21 @@ private:
 	void InitGenerators()
 	{
 		const auto chord = m_chords.at(m_currentChordIndex);
+		m_prevGenerators = m_generators;
 		m_generators.clear();
 		m_generators.reserve(chord.size());
 		const auto amplitude = m_amplitude / static_cast<ma_float>(chord.size());
+		size_t i = 0;
 		for (const auto& note : chord)
 		{
+			ma_float startPhase = 0.f;
+			if (i < m_prevGenerators.size())
+			{
+				startPhase = m_prevGenerators.at(i).GetPhase();
+			}
 			const auto amplitudeDelta = note.dim ? -amplitude / static_cast<ma_float>(m_samplesInBeat) : 0;
-			m_generators.emplace_back(m_sampleRate, GetNoteFrequency(note), amplitude, amplitudeDelta);
+			m_generators.emplace_back(m_sampleRate, GetNoteFrequency(note), amplitude, amplitudeDelta, startPhase);
+			++i;
 		}
 	}
 
@@ -83,5 +94,6 @@ private:
 	ma_uint32 m_bpm;
 	ma_uint32 m_samplesInBeat = m_sampleRate * SECONDS_PER_MINUTE / m_bpm;
 	ma_uint32 m_beatCount = m_samplesInBeat;
-	std::vector<SineWaveGenerator> m_generators;
+	std::vector<SineWaveGenerator> m_generators{};
+	std::vector<SineWaveGenerator> m_prevGenerators{};
 };
