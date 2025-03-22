@@ -2,6 +2,8 @@
 #include "waves/SineWaveGenerator.h"
 #include "Chord.h"
 #include "waves/PulseWaveGenerator.h"
+#include "waves/SawtoothWaveGenerator.h"
+#include "waves/TriangleWaveGenerator.h"
 
 #include <memory>
 #include <optional>
@@ -99,6 +101,14 @@ private:
 		if (m_type == "p")
 		{
 			return std::make_unique<PulseWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
+		}
+		if (m_type == "z")
+		{
+			return std::make_unique<SawtoothWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
+		}
+		if (m_type == "t")
+		{
+			return std::make_unique<TriangleWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
 		}
 
 		throw std::invalid_argument("Unknown type '" + m_type + "'");
