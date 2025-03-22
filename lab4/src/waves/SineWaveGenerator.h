@@ -1,9 +1,9 @@
 #pragma once
-#include "../lib/miniaudio.h"
+#include "WaveGenerator.h"
 #include <cmath>
 #include <numbers>
 
-class SineWaveGenerator
+class SineWaveGenerator : public WaveGenerator
 {
 public:
 	SineWaveGenerator(ma_uint32 sampleRate, ma_float frequency, ma_float amplitude, ma_float amplitudeDelta)
@@ -14,7 +14,7 @@ public:
 	{
 	}
 
-	ma_float GetNextSample()
+	ma_float GetNextSample() override
 	{
 		constexpr auto twoPi = static_cast<ma_float>(2.f * std::numbers::pi);
 

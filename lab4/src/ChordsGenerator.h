@@ -1,5 +1,5 @@
 #pragma once
-#include "SineWaveGenerator.h"
+#include "waves/SineWaveGenerator.h"
 #include "Chord.h"
 
 constexpr int SECONDS_PER_MINUTE = 60;
