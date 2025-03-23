@@ -69,7 +69,7 @@ private:
 	void ParseChords()
 	{
 		std::string line;
-		const std::regex noteRegex(R"(([A-G]#?\d-?)|(-))");
+		const std::regex noteRegex(R"(([A-G]#?\d-?[s,p,z,t]?)|(-))");
 
 		while (std::getline(m_inputStream, line))
 		{
@@ -112,10 +112,10 @@ private:
 		return ParseNote(noteStr);
 	}
 
-	static Note ParseNote(const std::string& noteStr)
+	Note ParseNote(const std::string& noteStr) const
 	{
 		Note note;
-		const std::regex noteRegex(R"(([A-G])(#?)(\d)(-?))");
+		const std::regex noteRegex(R"(([A-G])(#?)(\d)(-?)([s,p,z,t]?))");
 		std::smatch match;
 
 		if (std::regex_match(noteStr, match, noteRegex))
@@ -124,6 +124,7 @@ private:
 			const auto sharp = match[2].str();
 			const auto octaveStr = match[3].str();
 			const auto dimStr = match[4].str();
+			const auto type = match[5].str();
 
 			note.type = GetNoteType(noteName, sharp);
 			const auto octave = std::stoi(octaveStr);
@@ -133,6 +134,7 @@ private:
 			}
 			note.octave = octave;
 			note.dim = !dimStr.empty();
+			note.wave = type.empty() ? m_type : type;
 		}
 		else
 		{

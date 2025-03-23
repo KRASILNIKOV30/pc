@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <vector>
 
 enum NoteType
@@ -11,6 +12,7 @@ struct Note
 	NoteType type;
 	int octave;
 	bool dim = false;
+	std::string wave;
 };
 
 using Chord = std::vector<Note>;

@@ -76,7 +76,7 @@ private:
 				startPhase = m_prevGenerators.at(i)->GetPhase();
 			}
 			const auto amplitudeDelta = note.dim ? -amplitude / static_cast<ma_float>(m_samplesInBeat) : 0;
-			m_generators.emplace_back(CreateGenerator(m_sampleRate, GetNoteFrequency(note), amplitude, amplitudeDelta, startPhase));
+			m_generators.emplace_back(CreateGenerator(m_sampleRate, GetNoteFrequency(note), amplitude, amplitudeDelta, startPhase, note.wave));
 			++i;
 		}
 	}
@@ -92,26 +92,26 @@ private:
 		return frequency * powf(2, static_cast<ma_float>(note.octave - FIRST_OCTAVE_INDEX - 1));
 	}
 
-	std::unique_ptr<WaveGenerator> CreateGenerator(ma_uint32 sampleRate, ma_float frequency, ma_float amplitude, ma_float amplitudeDelta, ma_float startPhase)
+	static std::unique_ptr<WaveGenerator> CreateGenerator(ma_uint32 sampleRate, ma_float frequency, ma_float amplitude, ma_float amplitudeDelta, ma_float startPhase, const std::string& type)
 	{
-		if (m_type == "s")
+		if (type == "s")
 		{
 			return std::make_unique<SineWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
 		}
-		if (m_type == "p")
+		if (type == "p")
 		{
 			return std::make_unique<PulseWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
 		}
-		if (m_type == "z")
+		if (type == "z")
 		{
 			return std::make_unique<SawtoothWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
 		}
-		if (m_type == "t")
+		if (type == "t")
 		{
 			return std::make_unique<TriangleWaveGenerator>(sampleRate, frequency, amplitude, amplitudeDelta, startPhase);
 		}
 
-		throw std::invalid_argument("Unknown type '" + m_type + "'");
+		throw std::invalid_argument("Unknown type '" + type + "'");
 	}
 
 private:

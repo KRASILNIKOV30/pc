@@ -28,6 +28,7 @@ Args ParseArgs(int argc, char* argv[])
 
 void SetPlayerDataCallback(Player& player, ChordGenerator& chordGenerator, std::vector<float>& samplesBuffer, std::mutex& mutex)
 {
+	// создать временный буфер здесь и захватить по значению
 	player.SetDataCallback([&](void* output, ma_uint32 frameCount) mutable {
 		auto samples = std::span(static_cast<ma_float*>(output), frameCount);
 		std::vector<float> newSamples;
