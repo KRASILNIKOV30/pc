@@ -89,10 +89,14 @@ private:
 				++noteIndex;
 			}
 
-			m_chords.push_back(chord);
 			if (!chord.empty())
 			{
+				m_chords.push_back(chord);
 				m_previousChord = chord;
+			}
+			else
+			{
+				m_chords.push_back(m_previousChord.value());
 			}
 		}
 	}
