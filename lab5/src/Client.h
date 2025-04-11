@@ -8,15 +8,9 @@ class UdpClient
 public:
 	UdpClient(asio::io_context& io, const std::string& addressStr, const uint16_t port)
 		: m_socket(io, udp::v6())
+		  , m_server(asio::ip::make_address(addressStr), port)
 	{
-		const auto address = asio::ip::make_address(addressStr);
-		m_server = udp::endpoint(address, port);
-		boost::system::error_code error;
-		m_socket.bind({ m_socket.local_endpoint(error).protocol(), port }, error);
-		if (error)
-		{
-			std::cerr << "UDPPeer::bind error: " << error.message() << std::endl;
-		}
+		Bind(port);
 		StartReceive();
 	}
 
@@ -38,8 +32,16 @@ private:
 					OnReceive(msg);
 				}
 				StartReceive();
-			}
-			);
+			});
+	}
+
+	void Bind(uint16_t port)
+	{
+		boost::system::error_code error;
+		if (m_socket.bind({ m_socket.local_endpoint(error).protocol(), port }, error))
+		{
+			std::cerr << "bind error: " << error.message() << std::endl;
+		}
 	}
 
 	asio::ip::udp::socket m_socket;
@@ -73,10 +75,9 @@ inline void Run(const ClientMode& mode)
 	try
 	{
 		asio::io_context io;
-		std::jthread thread([&io] { io.run(); });
 		Receiver receiver(io, mode.address, mode.port);
 		std::cout << "Connected to server at " << mode.address << ":" << mode.port << std::endl;
-		thread.join();
+		io.run();
 	}
 	catch (const std::exception& e)
 	{

@@ -5,47 +5,28 @@
 class Server
 {
 public:
-	explicit Server(asio::io_context& io, uint16_t port)
+	explicit Server(asio::io_context& io, const uint16_t port)
 		: m_socket(io, udp::v6())
-
+		  , m_endpoint(udp::v6(), port)
 	{
-		boost::system::error_code ec;
-		m_socket.bind({ udp::v6(), port }, ec);
-		if (ec)
-		{
-			std::cerr << "UDPPeer::bind error: " << ec.message() << std::endl;
-		}
-		// boost::system::error_code ec;
-		//m_socket.set_option(asio::socket_base::broadcast(true), ec);
-		// if (ec)
-		// {
-		// 	throw std::runtime_error("Failed to set broadcast option: " + ec.message());
-		// }
 	}
 
 	void Send(const std::string& message)
 	{
-		m_socket.send_to(
+		m_socket.async_send_to(
 			asio::buffer(message),
-			m_endpoint
-			// [message](const boost::system::error_code& ec, std::size_t bytesSent) {
-			// 	std::cout << "hello" << std::endl;
-			// 	if (ec)
-			// 	{
-			// 		if (ec != asio::error::operation_aborted)
-			// 		{
-			// 			std::cerr << "Send failed: " << ec.message() << "\n";
-			// 		}
-			// 		return;
-			// 	}
-			// 	std::cout << "Sent: " << message << " (" << bytesSent << " bytes)\n";
-			// }
-			);
+			m_endpoint,
+			[](const boost::system::error_code& ec, std::size_t _) {
+				if (ec)
+				{
+					std::cerr << "Send failed: " << ec.message() << std::endl;
+				}
+			});
 	}
 
 private:
 	udp::socket m_socket;
-	udp::endpoint m_endpoint{ udp::v6(), 8080 };
+	udp::endpoint m_endpoint;
 };
 
 struct ServerMode
