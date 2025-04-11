@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+#include "../pch.h"
 #include <iostream>
 
 class Server
@@ -11,10 +11,10 @@ public:
 	{
 	}
 
-	void Send(const std::string& message)
+	void Send(const unsigned char* bytes, const size_t bytesCount)
 	{
 		m_socket.async_send_to(
-			asio::buffer(message),
+			asio::buffer(bytes, bytesCount),
 			m_endpoint,
 			[](const boost::system::error_code& ec, std::size_t _) {
 				if (ec)
@@ -28,27 +28,4 @@ private:
 	udp::socket m_socket;
 	udp::endpoint m_endpoint;
 };
-
-struct ServerMode
-{
-	uint16_t port;
-};
-
-inline void Run(const ServerMode& mode)
-{
-	asio::io_context io;
-	std::jthread ioThread([&io] { io.run(); });
-
-	Server server(io, mode.port);
-
-	std::cout << "Server on port " << mode.port << std::endl;
-
-	std::string str;
-	while (std::getline(std::cin, str))
-	{
-		server.Send(str);
-	}
-
-	io.stop();
-}
 

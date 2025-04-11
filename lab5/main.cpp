@@ -1,5 +1,5 @@
-#include "src/Client.h"
-#include "src/Server.h"
+#include "src/TVReceiver/ClientMode.h"
+#include "src/TVStation/ServerMode.h"
 #include <filesystem>
 #include <variant>
 
