@@ -20,11 +20,14 @@ public:
 private:
 	void HandleFrame(cv::Mat const& frame)
 	{
+		cv::Mat resizedFrame;
+		resize(frame, resizedFrame, cv::Size(640, 480));
+
 		std::vector<uint8_t> buffer;
 		buffer.reserve(BUFFER_SIZE);
-		constexpr int quality = 1;
+		constexpr int quality = 70;
 		const std::vector params{ cv::IMWRITE_JPEG_QUALITY, quality };
-		imencode(".jpg", frame, buffer, params);
+		imencode(".jpg", resizedFrame, buffer, params);
 
 		Send(buffer.data(), buffer.size());
 	}
