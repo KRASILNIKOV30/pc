@@ -5,9 +5,7 @@ add_executable(tv
         src/pch.h
         src/TVStation/VideoCamera.h
         src/TVReceiver/ClientMode.h
-        src/TVReceiver/TVReceiver.cpp
         src/TVReceiver/TVReceiver.h
-        src/TVStation/TVStation.cpp
         src/TVStation/TVStation.h
         src/TVStation/ServerMode.h
         src/TVStation/Microphone.h
