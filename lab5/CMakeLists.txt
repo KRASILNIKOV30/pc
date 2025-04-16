@@ -11,6 +11,7 @@ add_executable(tv
         src/TVStation/TVStation.h
         src/TVStation/ServerMode.h
         src/TVStation/Microphone.h
+        src/TVReceiver/AudioPlayer.h
 )
 
 set(BOOST_ROOT "/usr/include/boost")
