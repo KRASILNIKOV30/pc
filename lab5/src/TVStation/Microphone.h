@@ -28,6 +28,8 @@ public:
 		}
 	}
 
+	// копирование
+
 	void Run()
 	{
 		m_running = true;

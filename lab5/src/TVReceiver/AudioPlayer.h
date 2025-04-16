@@ -65,6 +65,7 @@ private:
 
 	int AudioOutputCallback(void* outputBuffer, unsigned int nFrames)
 	{
+		// предусмотреть переполнение
 		std::lock_guard lock(m_mutex);
 		auto* out = static_cast<int16_t*>(outputBuffer);
 
