@@ -39,7 +39,7 @@ public:
 	}
 
 private:
-	cv::VideoCapture m_capture{ 2 };
+	cv::VideoCapture m_capture{ 0 };
 	cv::Mat m_frame;
 	FrameHandler m_frameHandler;
 };

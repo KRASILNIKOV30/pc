@@ -2,7 +2,7 @@
 #include "Microphone.h"
 #include "Server.h"
 #include "VideoCamera.h"
-#include "../TVReceiver/AudioPlayer.h"
+#include "../PacketType.h"
 #include "../TVReceiver/Client.h"
 
 class TVStation : public Server
@@ -32,7 +32,7 @@ private:
 		constexpr int quality = 70;
 		const std::vector params{ cv::IMWRITE_JPEG_QUALITY, quality };
 		imencode(".jpg", resizedFrame, buffer, params);
-		buffer.insert(buffer.begin(), 0x02);
+		buffer.insert(buffer.begin(), VIDEO_PACKET);
 
 		Send(buffer.data(), buffer.size());
 	}
@@ -42,9 +42,14 @@ private:
 		const size_t bytesCount = audioData.size() * sizeof(int16_t);
 		std::vector<uint8_t> packet;
 		packet.reserve(1 + bytesCount);
-		packet.push_back(0x01);
-		const auto* data_ptr = reinterpret_cast<const uint8_t*>(audioData.data());
-		packet.insert(packet.end(), data_ptr, data_ptr + bytesCount);
+		packet.push_back(AUDIO_PACKET);
+
+		for (const auto sample : audioData)
+		{
+			auto networkSample = htons(static_cast<uint16_t>(sample));
+			const auto bytes = reinterpret_cast<uint8_t*>(&networkSample);
+			packet.insert(packet.end(), bytes, bytes + sizeof(uint16_t));
+		}
 
 		Send(packet.data(), packet.size());
 	}
