@@ -69,7 +69,7 @@ TEST_CASE("Single-threaded ticket sales")
 TEST_CASE("Multi-threaded ticket sales")
 {
 	constexpr int initialTickets = 10'000;
-	constexpr int threadCount = 10;
+	const auto threadCount = std::thread::hardware_concurrency();
 
 	TicketOffice office(initialTickets);
 	std::vector<int> ticketsSold(threadCount);
@@ -115,7 +115,7 @@ TEST_CASE("Multi-threaded ticket sales")
 					{
 						if (j % 2 == 0)
 						{
-							ticketsSold[i] += office.SellTickets(1);
+							ticketsSold[i] += office.SellTickets(11);
 						}
 						else
 						{

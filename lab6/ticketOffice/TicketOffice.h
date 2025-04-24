@@ -42,6 +42,10 @@ public:
 
 			ticketsSold = std::min(currentTickets, ticketsToBuy);
 			newCount = currentTickets - ticketsSold;
+			// Что будет, если поставить release вместо relaxed? (выяснил)
+			// Если поставить release, то добавится барьер, который гарантирует, что
+			// все операции записи в m_numTickets в текущем потоке будут видны другим потокам
+			// перед изменением атомарной переменной. Но при неудаче никакого изменения не происходит
 		} while (!m_numTickets.compare_exchange_weak(currentTickets, newCount, std::memory_order_release, std::memory_order_relaxed));
 
 		return ticketsSold;
@@ -49,6 +53,9 @@ public:
 
 	[[nodiscard]] int GetTicketsLeft() const noexcept
 	{
+		// какой memory_fence установить (добавлено)
+		// acquire
+		std::atomic_thread_fence(std::memory_order_acquire);
 		return m_numTickets.load(std::memory_order_relaxed);
 	}
 
