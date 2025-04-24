@@ -19,10 +19,13 @@ find_package(OpenCV REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(RTAUDIO REQUIRED rtaudio)
+pkg_check_modules(OPUS REQUIRED opus)
+include_directories(${OPUS_INCLUDE_DIRS})
 include_directories(${RTAUDIO_INCLUDE_DIRS})
 
 target_link_libraries(tv
         Boost::system
         ${OpenCV_LIBS}
         ${RTAUDIO_LIBRARIES}
+        ${OPUS_LIBRARIES}
 )

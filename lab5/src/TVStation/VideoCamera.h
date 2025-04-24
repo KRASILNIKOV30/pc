@@ -17,6 +17,7 @@ public:
 	}
 
 	// решить вопрос с копированием
+	VideoCamera(VideoCamera&& other) = delete;
 
 	void Run()
 	{

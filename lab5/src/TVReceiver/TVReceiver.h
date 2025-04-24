@@ -2,6 +2,8 @@
 #include "AudioPlayer.h"
 #include "Client.h"
 #include "../PacketType.h"
+
+#include <opus.h>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 
@@ -13,6 +15,7 @@ public:
 	{
 		namedWindow("Video", cv::WINDOW_AUTOSIZE);
 		m_videoThread = std::thread(&TVReceiver::VideoRenderThread, this);
+		m_opusDecoder = opus_decoder_create(SAMPLE_RATE, 1, nullptr);
 	}
 
 	void StopProcessing()
@@ -89,15 +92,19 @@ private:
 		m_audioPlayer.PushData(data);
 	}
 
-	static std::vector<int16_t> ParseAudioPacket(const uint8_t* payload, const size_t bytesCount)
+	std::vector<int16_t> ParseAudioPacket(const uint8_t* payload, const size_t bytesCount)
 	{
+		std::vector<int16_t> pcmData(5760);
+		int samplesDecoded = opus_decode(m_opusDecoder, payload, bytesCount,
+			pcmData.data(),
+			pcmData.size(),
+			0);
 		const auto sampleCount = bytesCount / sizeof(int16_t);
 		std::vector<int16_t> audioPackage(sampleCount);
-		const auto* networkSamples = reinterpret_cast<const uint16_t*>(payload);
 
-		for (size_t i = 0; i < sampleCount; i++)
+		for (size_t i = 0; i < samplesDecoded; i++)
 		{
-			audioPackage[i] = static_cast<int16_t>(ntohs(networkSamples[i]));
+			audioPackage[i] = static_cast<int16_t>(ntohs(pcmData[i]));
 		}
 
 		return audioPackage;
@@ -179,5 +186,7 @@ private:
 	cv::Mat m_currentVideo;
 	std::thread m_videoThread;
 
-	static constexpr uint64_t AUDIO_LEAD_THRESHOLD = 10;
+	OpusDecoder* m_opusDecoder;
+
+	static constexpr uint64_t AUDIO_LEAD_THRESHOLD = 50;
 };

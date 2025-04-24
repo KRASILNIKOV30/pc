@@ -3,7 +3,7 @@
 #include <queue>
 #include <RtAudio.h>
 
-constexpr int SAMPLE_RATE = 44100;
+constexpr int SAMPLE_RATE = 48000;
 
 class AudioPlayer
 {
