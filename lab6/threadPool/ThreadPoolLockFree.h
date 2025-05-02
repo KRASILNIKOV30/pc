@@ -9,7 +9,7 @@
 #include <vector>
 #include <stop_token>
 
-constexpr int QUEUE_SIZE = 1024;
+constexpr int QUEUE_SIZE = 1'000'000;
 
 class ThreadPoolLockFree
 {

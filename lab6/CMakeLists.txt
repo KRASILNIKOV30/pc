@@ -15,6 +15,7 @@ add_executable(thread-pool
         main.cpp
         threadPool/ThreadPoolLockBased.h
         threadPool/ThreadPoolLockFree.h
+        ../lib/timer/Timer.h
 )
 
 add_executable(thread-pool_tests
@@ -22,6 +23,11 @@ add_executable(thread-pool_tests
         threadPool/ThreadPoolLockFree.h
         tests/ThreadPoolLockFree_tests.cpp
         tests/ThreadPoolLockBased_tests.cpp
+)
+
+add_executable(stop-source
+        stopToken/StopSource.h
+        stopToken/StopToken.h
 )
 
 set(BOOST_ROOT "/usr/include/boost")
