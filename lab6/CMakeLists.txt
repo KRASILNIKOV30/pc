@@ -25,9 +25,9 @@ add_executable(thread-pool_tests
         tests/ThreadPoolLockBased_tests.cpp
 )
 
-add_executable(stop-source
-        stopToken/StopSource.h
+add_executable(stop-source_tests
         stopToken/StopToken.h
+        tests/StopToken_tests.cpp
 )
 
 set(BOOST_ROOT "/usr/include/boost")
@@ -37,6 +37,7 @@ target_link_libraries(ticket-office_tests PUBLIC catch2)
 target_link_libraries(atomic-max_tests PUBLIC catch2)
 target_link_libraries(thread-pool Boost::system Boost::thread)
 target_link_libraries(thread-pool_tests Boost::system Boost::thread catch2)
+target_link_libraries(stop-source_tests catch2)
 
 #find_package(TBB REQUIRED)
 #target_link_libraries(ticket-office PRIVATE TBB::tbb)
