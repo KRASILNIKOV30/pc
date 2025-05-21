@@ -42,5 +42,6 @@ public:
 	}
 
 private:
+	// сравнить с atomic<bool>
 	std::shared_ptr<std::atomic_flag> m_stopRequested = std::make_shared<std::atomic_flag>();
 };

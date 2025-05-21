@@ -48,6 +48,7 @@ public:
 		}
 
 		auto* taskPtr = new Task(std::move(task));
+		// gsl::finally
 		if (!m_tasks.push(taskPtr))
 		{
 			delete taskPtr;
