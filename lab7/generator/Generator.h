@@ -19,9 +19,9 @@ public:
 		std::exception_ptr m_exception;
 
 		template <std::convertible_to<T> U>
-		std::suspend_always yield_value(U value)
+		std::suspend_always yield_value(U&& value)
 		{
-			m_value = value;
+			m_value.emplace(std::forward<U>(value));
 			return {};
 		}
 

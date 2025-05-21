@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <string>
 #include "Generator.h"
@@ -12,6 +13,13 @@ struct Book
 
 struct BookChapter
 {
+	BookChapter(std::string bookTitle, std::string bookAuthor, std::string chapterTitle)
+		: bookTitle(std::move(bookTitle))
+		  , bookAuthor(std::move(bookAuthor))
+		  , chapterTitle(std::move(chapterTitle))
+	{
+	}
+
 	std::string bookTitle;
 	std::string bookAuthor;
 	std::string chapterTitle;
