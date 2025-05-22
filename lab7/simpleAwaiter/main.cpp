@@ -6,15 +6,15 @@ struct MyAwaiter
 {
 	bool await_ready()
 	{
-		return false;
+		return true;
 	}
 
-	void await_suspend(std::coroutine_handle<> handle)
+	void await_suspend(const std::coroutine_handle<> handle)
 	{
 		handle.resume();
 	}
 
-	int await_resume() const noexcept
+	[[nodiscard]] int await_resume() const noexcept
 	{
 		return x + y;
 	}
@@ -78,7 +78,10 @@ public:
 
 	void Resume() const
 	{
-		m_handle.resume();
+		if (!m_handle.done())
+		{
+			m_handle.resume();
+		}
 	}
 
 private:
