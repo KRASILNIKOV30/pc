@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <utility>
 #include <optional>
+#include <variant>
 
 template <typename T>
 class Generator
@@ -15,31 +16,32 @@ public:
 
 	struct promise_type
 	{
-		std::optional<T> m_value = std::nullopt;
-		std::exception_ptr m_exception;
+		// std::optional<T> m_value = std::nullopt;
+		// std::exception_ptr m_exception;
+		std::variant<std::monostate, T, std::exception_ptr> result;
 
 		template <std::convertible_to<T> U>
 		std::suspend_always yield_value(U&& value)
 		{
-			m_value.emplace(std::forward<U>(value));
+			result.template emplace<1>(std::forward<U>(value));
 			return {};
 		}
 
 		[[nodiscard]] bool HasException() const noexcept
 		{
-			return m_exception != nullptr;
+			return std::holds_alternative<std::exception_ptr>(result);
 		}
 
 		[[nodiscard]] bool HasValue() const noexcept
 		{
-			return m_value.has_value();
+			return std::holds_alternative<T>(result);
 		}
 
 		void ThrowIfException() const
 		{
 			if (HasException())
 			{
-				std::rethrow_exception(m_exception);
+				std::rethrow_exception(std::get<std::exception_ptr>(result));
 			}
 		}
 
@@ -48,9 +50,9 @@ public:
 			ThrowIfException();
 			if (HasValue())
 			{
-				return m_value.value();
+				return std::get<T>(result);
 			}
-			throw std::logic_error("GetValue() is called without resume");
+			throw std::logic_error("No value");
 		}
 
 		std::suspend_always initial_suspend() { return {}; }
@@ -58,7 +60,7 @@ public:
 
 		void unhandled_exception()
 		{
-			m_exception = std::current_exception();
+			result.template emplace<2>(std::current_exception());
 		}
 
 		Generator get_return_object()

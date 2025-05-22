@@ -10,4 +10,10 @@ add_executable(generator
         generator/main.cpp
 )
 
+add_executable(generator_tests
+        generator/Generator.h
+        tests/Generator-tests.cpp
+)
+
 target_link_libraries(my-task_tests catch2)
+target_link_libraries(generator_tests catch2)
