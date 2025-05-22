@@ -15,5 +15,9 @@ add_executable(generator_tests
         tests/Generator-tests.cpp
 )
 
+add_executable(my-awaiter
+        simpleAwaiter/main.cpp
+)
+
 target_link_libraries(my-task_tests catch2)
 target_link_libraries(generator_tests catch2)

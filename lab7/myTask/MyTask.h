@@ -23,7 +23,7 @@ public:
 		std::string m_value;
 	};
 
-	std::string GetResult() const
+	[[nodiscard]] std::string GetResult() const
 	{
 		return m_handle.promise().m_value;
 	}
@@ -36,6 +36,15 @@ public:
 	MyTask(MyTask&& other) noexcept
 		: m_handle(std::exchange(other.m_handle, nullptr))
 	{
+	}
+
+	MyTask& operator=(MyTask&& other) noexcept
+	{
+		if (std::addressof(other) != this)
+		{
+			m_handle = std::exchange(other.m_handle, nullptr);
+		}
+		return *this;
 	}
 
 	MyTask(const MyTask&) = delete;
