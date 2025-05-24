@@ -27,6 +27,6 @@ inline Task AsyncCopyTwoFiles(Dispatcher& dispatcher,
 {
 	auto t1 = AsyncCopyFile(dispatcher, from1, to1);
 	auto t2 = AsyncCopyFile(dispatcher, from2, to2);
-	//co_await t1;
-	//co_await t2;
+	co_await t1;
+	co_await t2;
 }

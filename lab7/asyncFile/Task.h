@@ -5,7 +5,6 @@
 struct Task
 {
 	struct promise_type;
-
 	using handle_type = std::coroutine_handle<promise_type>;
 
 	struct promise_type
@@ -47,10 +46,26 @@ struct Task
 	{
 	}
 
+	[[nodiscard]] bool Done() const noexcept
+	{
+		return !coro || coro.done();
+	}
+
+	void Wait() const noexcept
+	{
+		while (!Done())
+		{
+			coro.resume();
+		}
+	}
+
+
 	~Task()
 	{
 		if (coro)
+		{
 			coro.destroy();
+		}
 	}
 
 	Awaiter operator co_await() const

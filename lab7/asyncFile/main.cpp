@@ -10,5 +10,6 @@ int main()
 	Task task2 = AsyncCopyFile(dispatcher, "b.in", "b.out");
 	std::jthread t{ [&] { dispatcher.Run(); } };
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	dispatcher.Stop();
+	dispatcher.Wait();
+	// dispatcher.Stop();
 }
