@@ -2,5 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/cppcoro-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/cppcoro-src/tools/cake" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/gsl-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/cppcoro-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/cppcoro-src/tools/cake" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/gsl-src" vcs="Git" />
   </component>
 </project>

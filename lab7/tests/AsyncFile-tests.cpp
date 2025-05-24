@@ -1,24 +1,26 @@
 #define CATCH_CONFIG_MAIN
 #include"../../lib/catch2/catch.hpp"
 #include "../asyncFile/Dispatcher.h"
+#include "../asyncFile/Task.h"
+#include "../asyncFile/CopyFile.h"
 #include <thread>
 
-SCENARIO("Async file operations work correctly", "[async][file]")
+SCENARIO("Async file operations work correctly")
 {
 	GIVEN("A Dispatcher and test files")
 	{
 		Dispatcher dispatcher;
-		const std::string test_input = "test_input.txt";
-		const std::string test_output = "test_output.txt";
+		const std::string testInput = "test_input.txt";
+		const std::string testOutput = "test_output.txt";
 
 		{
-			std::ofstream out(test_input);
+			std::ofstream out(testInput);
 			out << "Hello, async world!\nThis is a test file.";
 		}
 
 		WHEN("We copy a file asynchronously")
 		{
-			Task copy_task = AsyncCopyFile(dispatcher, test_input, test_output);
+			Task copyTask = AsyncCopyFile(dispatcher, testInput, testOutput);
 
 			THEN("The task should complete successfully")
 			{
@@ -31,8 +33,8 @@ SCENARIO("Async file operations work correctly", "[async][file]")
 
 				AND_THEN("The output file should match the input")
 				{
-					std::ifstream in(test_input);
-					std::ifstream out(test_output);
+					std::ifstream in(testInput);
+					std::ifstream out(testOutput);
 
 					REQUIRE(std::equal(
 						std::istreambuf_iterator<char>(in),
@@ -42,31 +44,65 @@ SCENARIO("Async file operations work correctly", "[async][file]")
 			}
 		}
 
-		// Удаляем тестовые файлы
-		std::remove(test_input.c_str());
-		std::remove(test_output.c_str());
+		std::remove(testInput.c_str());
+		std::remove(testOutput.c_str());
 	}
 }
 
-// SCENARIO("AsyncOpenFile with non-existent file")
+// SCENARIO("Copy two files")
 // {
-// 	Dispatcher dispatcher;
-// 	const std::string non_existent = "non_existent_file.xyz";
-//
-// 	WHEN("Trying to open non-existent file")
+// 	GIVEN("A Dispatcher and test files")
 // 	{
-// 		auto open_task = AsyncOpenFile(dispatcher, non_existent, OpenMode::Read);
-// 		std::jthread worker([&]() { dispatcher.Run(); });
+// 		Dispatcher dispatcher;
+// 		const std::string testInput1 = "test_input1.txt";
+// 		const std::string testOutput1 = "test_output1.txt";
+// 		const std::string testInput2 = "test_input2.txt";
+// 		const std::string testOutput2 = "test_output2.txt";
 //
-// 		THEN("It should fail")
 // 		{
-// 			REQUIRE_THROWS_AS([&]() {
-// 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-// 				}(), std::runtime_error);
+// 			std::ofstream out1(testInput1);
+// 			out1 << "Hello, async world!\nThis is a test file number one.";
+// 			std::ofstream out2(testInput2);
+// 			out2 << "Hello, async world!\nThis is a test file number two.";
 // 		}
 //
-// 		dispatcher.Stop();
-// 		// pthread_kill(worker.native_handle(), SIGINT);
-// 		// worker.join();
+// 		WHEN("We copy two files asynchronously")
+// 		{
+// 			Task copyTask = AsyncCopyTwoFiles(dispatcher, testInput1, testOutput1, testInput2, testOutput2);
+//
+// 			THEN("The task should complete successfully")
+// 			{
+// 				std::jthread worker([&]() { dispatcher.Run(); });
+//
+// 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//
+// 				//cppcoro::sync_wait(copy_task);
+// 				dispatcher.Stop();
+//
+// 				AND_THEN("The output file should match the input")
+// 				{
+// 					std::ifstream in1(testInput1);
+// 					std::ifstream out1(testOutput1);
+//
+// 					std::ifstream in2(testInput2);
+// 					std::ifstream out2(testOutput2);
+//
+// 					REQUIRE(std::equal(
+// 						std::istreambuf_iterator<char>(in1),
+// 						std::istreambuf_iterator<char>(),
+// 						std::istreambuf_iterator<char>(out1)));
+//
+// 					REQUIRE(std::equal(
+// 						std::istreambuf_iterator<char>(in2),
+// 						std::istreambuf_iterator<char>(),
+// 						std::istreambuf_iterator<char>(out2)));
+// 				}
+// 			}
+// 		}
+//
+// 		std::remove(testInput1.c_str());
+// 		std::remove(testOutput1.c_str());
+// 		std::remove(testInput2.c_str());
+// 		std::remove(testOutput2.c_str());
 // 	}
 // }

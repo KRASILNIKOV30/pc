@@ -4,7 +4,6 @@
 #include <iterator>
 #include <stdexcept>
 #include <utility>
-#include <optional>
 #include <variant>
 
 template <typename T>
@@ -16,14 +15,13 @@ public:
 
 	struct promise_type
 	{
-		// std::optional<T> m_value = std::nullopt;
-		// std::exception_ptr m_exception;
-		std::variant<std::monostate, T, std::exception_ptr> result;
+		// оптимизировать (исправлено)
+		std::variant<std::monostate, T*, std::exception_ptr> result;
 
 		template <std::convertible_to<T> U>
 		std::suspend_always yield_value(U&& value)
 		{
-			result.template emplace<1>(std::forward<U>(value));
+			result.template emplace<1>(&value);
 			return {};
 		}
 
@@ -34,7 +32,7 @@ public:
 
 		[[nodiscard]] bool HasValue() const noexcept
 		{
-			return std::holds_alternative<T>(result);
+			return std::holds_alternative<T*>(result);
 		}
 
 		void ThrowIfException() const
@@ -50,7 +48,7 @@ public:
 			ThrowIfException();
 			if (HasValue())
 			{
-				return std::get<T>(result);
+				return *std::get<T*>(result);
 			}
 			throw std::logic_error("No value");
 		}
@@ -78,7 +76,6 @@ public:
 	{
 	}
 
-	// Генератор нельзя копировать. Только перемещать.
 	Generator(const Generator& other) = delete;
 	Generator& operator=(const Generator& other) = delete;
 
@@ -113,7 +110,6 @@ public:
 	class Iterator
 	{
 	public:
-		// Даём генератору доступ к нашему приватному конструктору
 		friend class Generator;
 
 		using iterator_category = std::input_iterator_tag;
@@ -124,7 +120,6 @@ public:
 
 		Iterator() = default;
 
-		// Поддерживается только перемещение итератора
 		Iterator(const Iterator&) = delete;
 		Iterator& operator=(const Iterator&) = delete;
 

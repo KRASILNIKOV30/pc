@@ -6,12 +6,12 @@ struct MyAwaiter
 {
 	bool await_ready()
 	{
-		return true;
+		return false;
 	}
 
 	void await_suspend(const std::coroutine_handle<> handle)
 	{
-		handle.resume();
+		// handle.resume();
 	}
 
 	[[nodiscard]] int await_resume() const noexcept
@@ -101,6 +101,7 @@ int main()
 {
 	const auto task = CoroutineWithAwait(30, 12);
 	std::cout << "Before resume" << std::endl;
+	task.Resume();
 	task.Resume();
 	std::cout << "After resume" << std::endl;
 	CoroutineWithAwait(5, 10).Resume();

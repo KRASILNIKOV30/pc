@@ -23,12 +23,20 @@ add_executable(my-awaiter
 
 add_executable(async-file_tests
         asyncFile/Dispatcher.h
+        asyncFile/AsyncFile.h
+        asyncFile/Task.h
+        asyncFile/OpenAsyncFile.h
+        asyncFile/CopyFile.h
         tests/AsyncFile-tests.cpp
 )
 
 add_executable(async-file
         asyncFile/Dispatcher.h
         asyncFile/main.cpp
+        asyncFile/AsyncFile.h
+        asyncFile/OpenAsyncFile.h
+        asyncFile/Task.h
+        asyncFile/CopyFile.h
 )
 
 find_package(PkgConfig REQUIRED)
