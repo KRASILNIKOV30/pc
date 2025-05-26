@@ -5,6 +5,14 @@ add_executable(particle-system
         glfwWindow/GLFWInitializer.cpp
         window/Window.cpp
         window/Window.h
+        vector/Vector2.h
+        vector/Vector3.h
+        vector/Vector4.h
+        vector/VectorMath.h
+        matrix/Matrix3.h
+        matrix/Matrix4.h
+        Model.h
+        Random.h
         main.cpp
 )
 

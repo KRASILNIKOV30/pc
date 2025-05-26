@@ -4,13 +4,10 @@
 
 namespace
 {
-// Угол обзора по вертикали
 constexpr double FIELD_OF_VIEW = 60 * M_PI / 180.0;
-// Размер стороны куба
-constexpr double SHAPE_SIZE = 1;
-
+constexpr int PARTICLES_NUMBER = 1000;
 constexpr double Z_NEAR = 0.1;
-constexpr double Z_FAR = 10;
+constexpr double Z_FAR = 100;
 
 // Ортонормируем матрицу 4*4 (это должна быть аффинная матрица)
 glm::dmat4x4 Orthonormalize(const glm::dmat4x4& m)
@@ -86,19 +83,20 @@ void Window::OnResize(int width, int height)
 
 void Window::OnRunStart()
 {
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+	for (int i = 0; i < PARTICLES_NUMBER; ++i)
+	{
+		m_particles.Add();
+	}
 
-	// Включаем режим отбраковки граней
 	glEnable(GL_CULL_FACE);
-	// Отбраковываться будут нелицевые стороны граней
 	glCullFace(GL_BACK);
-	// Сторона примитива считается лицевой, если при ее рисовании
-	// обход верших осуществляется против часовой стрелки
 	glFrontFace(GL_CCW);
 
-	// Включаем тест глубины для удаления невидимых линий и поверхностей
+	glEnable(GL_POINT_SMOOTH);
+	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+
 	glEnable(GL_DEPTH_TEST);
+	glPointSize(40.0f);
 }
 
 void Window::Draw(int width, int height)
@@ -106,11 +104,58 @@ void Window::Draw(int width, int height)
 	glClearColor(1, 1, 1, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	ProcessInput();
 	SetupCameraMatrix();
+
+	glBegin(GL_POINTS);
+	m_particles.ForEach([](const Particle& p) {
+		glColor4f(p.color.x, p.color.y, p.color.z, p.color.w);
+		glVertex3d(p.pos.x, p.pos.y, p.pos.z);
+	});
+	glEnd();
 }
 
 void Window::SetupCameraMatrix()
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixd(&m_cameraMatrix[0][0]);
+}
+
+void Window::ProcessInput()
+{
+	CheckKeyPress(GLFW_KEY_1, [&] {
+		m_particles.Add();
+	});
+	CheckKeyPress(GLFW_KEY_2, [&] {
+		m_particles.Delete();
+	});
+	CheckKeyPress(GLFW_KEY_UP, [&] {
+		m_particles.IncreaseGravity();
+	});
+	CheckKeyPress(GLFW_KEY_DOWN, [&] {
+		m_particles.DecreaseGravity();
+	});
+	CheckKeyPress(GLFW_KEY_LEFT, [&] {
+		m_particles.SlowDownTime();
+	});
+	CheckKeyPress(GLFW_KEY_RIGHT, [&] {
+		m_particles.SpeedUpTime();
+	});
+}
+void Window::CheckKeyPress(int key, const std::function<void()>& callback)
+{
+	const auto keyPressed = IsKeyPressed(key);
+	if (keyPressed && !m_keyState[key])
+	{
+		callback();
+		m_keyState[key] = true;
+	}
+	else if (!keyPressed)
+	{
+		m_keyState[key] = false;
+	}
+}
+void Window::OnIdle(double deltaTime)
+{
+	m_particles.Update(deltaTime);
 }
