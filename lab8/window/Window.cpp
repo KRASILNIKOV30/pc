@@ -88,6 +88,12 @@ void Window::OnRunStart()
 		m_particles.Add();
 	}
 
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	GLfloat lightPos[] = { 0.0f, 0.0f, 100.0f, 1.0f };
+	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
@@ -97,6 +103,9 @@ void Window::OnRunStart()
 
 	glEnable(GL_DEPTH_TEST);
 	glPointSize(40.0f);
+
+	m_sphereQuadric = gluNewQuadric();
+	gluQuadricNormals(m_sphereQuadric, GLU_SMOOTH);
 }
 
 void Window::Draw(int width, int height)
@@ -108,11 +117,31 @@ void Window::Draw(int width, int height)
 	SetupCameraMatrix();
 
 	glBegin(GL_POINTS);
-	m_particles.ForEach([](const Particle& p) {
-		glColor4f(p.color.x, p.color.y, p.color.z, p.color.w);
-		glVertex3d(p.pos.x, p.pos.y, p.pos.z);
+	m_particles.ForEach([&](const Particle& p) {
+		double radius = 0.2 * std::cbrt(p.mass);
+		DrawSphere(p.pos, radius, p.color);
 	});
 	glEnd();
+}
+
+void Window::DrawSphere(const Vector3d& pos, double radius, const Vector4f& color)
+{
+	glPushMatrix();
+	glTranslated(pos.x, pos.y, pos.z);
+
+	// Материал сферы
+	GLfloat matAmbient[] = { color.x * 0.3f, color.y * 0.3f, color.z * 0.3f, color.w };
+	GLfloat matDiffuse[] = { color.x, color.y, color.z, color.w };
+	GLfloat matSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
+	glMaterialf(GL_FRONT, GL_SHININESS, 50.0f);
+
+	gluSphere(m_sphereQuadric, radius, 16, 16);
+
+	glPopMatrix();
 }
 
 void Window::SetupCameraMatrix()

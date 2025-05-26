@@ -12,6 +12,7 @@ struct Particle
 	Vector4f color;
 };
 
+constexpr double BOUNDARY = 50.0;
 class Particles
 {
 public:
@@ -43,16 +44,34 @@ public:
 			}
 		}
 
-		// Интегрирование движения (явный метод Эйлера)
 		const double scaledDelta = deltaTime * m_timeCoef;
 		for (auto& p : m_particles)
 		{
 			p.speed += p.acceleration * scaledDelta;
 			p.pos += p.speed * scaledDelta;
+
+			for (int i = 0; i < 3; ++i)
+			{
+				if (std::abs(p.pos.x) > BOUNDARY)
+				{
+					p.pos.x = std::copysign(BOUNDARY, p.pos.x);
+					p.speed.x *= -0.8;
+				}
+				if (std::abs(p.pos.y) > BOUNDARY)
+				{
+					p.pos.y = std::copysign(BOUNDARY, p.pos.y);
+					p.speed.y *= -0.8;
+				}
+				if (std::abs(p.pos.z) > BOUNDARY)
+				{
+					p.pos.z = std::copysign(BOUNDARY, p.pos.z);
+					p.speed.z *= -0.8;
+				}
+			}
 		}
 	}
 
-	void ForEach(std::function<void(Particle const&)> callback) const
+	void ForEach(const std::function<void(Particle const&)>& callback) const
 	{
 		for (const auto& p : m_particles)
 		{
@@ -102,5 +121,5 @@ public:
 private:
 	std::vector<Particle> m_particles;
 	double m_timeCoef = 1.0;
-	double m_G = 6.67430e-3;
+	double m_G = 6.67430e-11;
 };
