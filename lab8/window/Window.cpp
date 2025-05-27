@@ -5,9 +5,9 @@
 namespace
 {
 constexpr double FIELD_OF_VIEW = 60 * M_PI / 180.0;
-constexpr int PARTICLES_NUMBER = 1000;
-constexpr double Z_NEAR = 0.1;
-constexpr double Z_FAR = 100;
+constexpr int PARTICLES_NUMBER = 3000;
+constexpr double Z_NEAR = 10.0;
+constexpr double Z_FAR = 1000;
 
 // Ортонормируем матрицу 4*4 (это должна быть аффинная матрица)
 glm::dmat4x4 Orthonormalize(const glm::dmat4x4& m)
@@ -35,6 +35,10 @@ void Window::OnMouseButton(int button, int action, int mods)
 	if (button == GLFW_MOUSE_BUTTON_1)
 	{
 		m_leftButtonPressed = (action & GLFW_PRESS) != 0;
+	}
+	if (button == GLFW_MOUSE_BUTTON_2 && (action & GLFW_PRESS) != 0)
+	{
+		m_showPoints = !m_showPoints;
 	}
 }
 
@@ -102,7 +106,6 @@ void Window::OnRunStart()
 	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
 	glEnable(GL_DEPTH_TEST);
-	glPointSize(40.0f);
 
 	m_sphereQuadric = gluNewQuadric();
 	gluQuadricNormals(m_sphereQuadric, GLU_SMOOTH);
@@ -110,18 +113,31 @@ void Window::OnRunStart()
 
 void Window::Draw(int width, int height)
 {
-	glClearColor(1, 1, 1, 1);
+	glClearColor(0.05, 0.05, 0.2, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	ProcessInput();
 	SetupCameraMatrix();
 
-	glBegin(GL_POINTS);
-	m_particles.ForEach([&](const Particle& p) {
-		double radius = 0.2 * std::cbrt(p.mass);
-		DrawSphere(p.pos, radius, p.color);
-	});
-	glEnd();
+	if (m_showPoints)
+	{
+		glPointSize(5.0f);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POINTS);
+		m_particles.ForEach([&](const Particle& p) {
+			glColor3f(p.color.x, p.color.y, p.color.z);
+			glVertex3d(p.pos.x, p.pos.y, p.pos.z);
+		});
+		glEnd();
+	}
+	else
+	{
+		glEnable(GL_LIGHTING);
+		m_particles.ForEach([&](const Particle& p) {
+			double radius = 0.2 * std::cbrt(p.mass);
+			DrawSphere(p.pos, radius, p.color);
+		});
+	}
 }
 
 void Window::DrawSphere(const Vector3d& pos, double radius, const Vector4f& color)

@@ -14,15 +14,19 @@ add_executable(particle-system
         Model.h
         Random.h
         main.cpp
+        gpuRunner/GPURunner.h
 )
 
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
+find_package(OpenCL REQUIRED)
 
+include_directories(${OpenCL_INCLUDE_DIRS})
 target_link_libraries(particle-system
         glfw
         OpenGL::GL
         GLU
+        ${OpenCL_LIBRARIES}
         ${GLUT_LIBRARIES}
 )

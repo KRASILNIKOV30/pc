@@ -39,4 +39,5 @@ private:
 	Particles m_particles;
 	bool m_keyState[GLFW_KEY_LAST] = { false };
 	GLUquadric* m_sphereQuadric;
+	bool m_showPoints = true;
 };
