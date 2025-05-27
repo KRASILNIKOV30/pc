@@ -1,14 +1,14 @@
 #pragma once
 #include <random>
 
-inline double RandomDouble()
+inline float RandomFloat()
 {
 	thread_local std::mt19937 generator(std::random_device{}());
 	thread_local std::uniform_real_distribution distribution(0.0, 1.0);
-	return distribution(generator);
+	return static_cast<float>(distribution(generator));
 }
 
-inline double RandomDouble(double min, double max)
+inline float RandomFloat(float min, float max)
 {
-	return std::lerp(min, max, RandomDouble());
+	return std::lerp(min, max, RandomFloat());
 }

@@ -1,11 +1,12 @@
 #include "Window.h"
 #include <cmath>
 #include <GL/gl.h>
+#include <GL/glut.h>
 
 namespace
 {
 constexpr double FIELD_OF_VIEW = 60 * M_PI / 180.0;
-constexpr int PARTICLES_NUMBER = 3000;
+constexpr int PARTICLES_NUMBER = 5000;
 constexpr double Z_NEAR = 10.0;
 constexpr double Z_FAR = 1000;
 
@@ -121,10 +122,10 @@ void Window::Draw(int width, int height)
 
 	if (m_showPoints)
 	{
-		glPointSize(5.0f);
+		glPointSize(3.0f);
 		glDisable(GL_LIGHTING);
 		glBegin(GL_POINTS);
-		m_particles.ForEach([&](const Particle& p) {
+		m_particles.ForEach([&](const ParticleView& p) {
 			glColor3f(p.color.x, p.color.y, p.color.z);
 			glVertex3d(p.pos.x, p.pos.y, p.pos.z);
 		});
@@ -133,14 +134,16 @@ void Window::Draw(int width, int height)
 	else
 	{
 		glEnable(GL_LIGHTING);
-		m_particles.ForEach([&](const Particle& p) {
-			double radius = 0.2 * std::cbrt(p.mass);
-			DrawSphere(p.pos, radius, p.color);
+		m_particles.ForEach([&](const ParticleView& p) {
+			double radius = 0.2 * std::cbrt(p.pos.w);
+			DrawSphere({ p.pos.x, p.pos.y, p.pos.z }, radius, p.color);
 		});
 	}
+
+	DrawStats();
 }
 
-void Window::DrawSphere(const Vector3d& pos, double radius, const Vector4f& color)
+void Window::DrawSphere(const Vector3f& pos, double radius, const Vector4f& color)
 {
 	glPushMatrix();
 	glTranslated(pos.x, pos.y, pos.z);
@@ -203,4 +206,63 @@ void Window::CheckKeyPress(int key, const std::function<void()>& callback)
 void Window::OnIdle(double deltaTime)
 {
 	m_particles.Update(deltaTime);
+
+	m_accumulatedTime += deltaTime;
+	++m_frameCount;
+
+	if (m_accumulatedTime >= 1.0)
+	{
+		m_fps = static_cast<double>(m_frameCount) / m_accumulatedTime;
+		m_frameCount = 0;
+		m_accumulatedTime = 0.0;
+	}
+}
+
+void Window::DrawStats()
+{
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+
+	const auto size = GetFramebufferSize();
+	gluOrtho2D(0, size.x, size.y, 0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	const auto g = "G: " + std::to_string(m_particles.GetGravityConstant());
+	const auto time = "TimeCoef: " + std::to_string(m_particles.GetTime());
+	const auto numParticles = "NumParticles: " + std::to_string(m_particles.GetNumParticles());
+	const auto fps = "FPS: " + std::to_string(m_fps);
+
+	DrawText(g, 20.0, 30.0);
+	DrawText(time, 20.0, 50.0);
+	DrawText(numParticles, 20.0, 70.0);
+	DrawText(fps, 20.0, 90.0);
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	glEnable(GL_DEPTH_TEST);
+	if (!m_showPoints)
+	{
+		glEnable(GL_LIGHTING);
+	}
+}
+
+void Window::DrawText(std::string const& text, GLfloat x, GLfloat y)
+{
+	glRasterPos2f(x, y);
+	for (char c : text)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
+	}
 }

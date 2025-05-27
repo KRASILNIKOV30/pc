@@ -27,9 +27,11 @@ private:
 	void ProcessInput();
 	void CheckKeyPress(int key, std::function<void()> const& callback);
 	void OnIdle(double deltaTime) override;
-	void DrawSphere(const Vector3d& pos, double radius, const Vector4f& color);
+	void DrawSphere(const Vector3f& pos, double radius, const Vector4f& color);
+	void DrawStats();
+	static void DrawText(std::string const& text, GLfloat x, GLfloat y);
 
-	static constexpr double DISTANCE_TO_ORIGIN = 0.1;
+	static constexpr double DISTANCE_TO_ORIGIN = 120;
 	bool m_leftButtonPressed = false;
 	glm::dvec2 m_mousePos = {};
 	glm::dmat4x4 m_cameraMatrix = glm::lookAt(
@@ -40,4 +42,7 @@ private:
 	bool m_keyState[GLFW_KEY_LAST] = { false };
 	GLUquadric* m_sphereQuadric;
 	bool m_showPoints = true;
+	double m_fps;
+	double m_accumulatedTime;
+	size_t m_frameCount;
 };

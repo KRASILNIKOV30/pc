@@ -1,3 +1,4 @@
+#pragma once
 #include <CL/cl.h>
 #include <CL/opencl.hpp>
 #include <iostream>
@@ -15,9 +16,8 @@ struct ArgValue
 struct KernelArgs
 {
 	cl::NDRange globalSize;
-	cl::NDRange localSize;
-	std::vector<std::vector<float>> inputBuffers;
-	std::vector<float> outputBuffer;
+	std::vector<cl::Buffer> inputBuffers;
+	cl::Buffer outputBuffer;
 	std::vector<ArgValue> argValues;
 };
 
@@ -26,22 +26,41 @@ class GPURunner
 public:
 	virtual ~GPURunner() = default;
 
-	void Run(std::string const& kernelName)
+	template <class T>
+	void Run(std::string const& kernelName, std::vector<T>& result)
 	{
 		if (!m_initialized)
 		{
 			InitializeOpenCL();
-			const std::string kernelSource = GetKernelSource();
+			const char* kernelSource = GetKernelSource();
 			m_program = cl::Program(m_context, kernelSource, true);
 			m_kernel = { m_program, kernelName.c_str() };
 		}
 
-		ExecuteKernel();
+		ExecuteKernel<T>(result);
 	}
 
 protected:
-	[[nodiscard]] virtual std::string GetKernelSource() const = 0;
-	virtual KernelArgs GetKernelArgs() = 0;
+	[[nodiscard]] virtual const char* GetKernelSource() const = 0;
+	virtual KernelArgs& GetKernelArgs() = 0;
+
+	template <class T>
+	cl::Buffer GetInputBuffer(std::vector<T>& v)
+	{
+		return {
+			m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+			sizeof(T) * v.size(), static_cast<void*>(v.data())
+		};
+	}
+
+	template <class T>
+	cl::Buffer GetOutputBuffer(std::vector<T> const& v)
+	{
+		return {
+			m_context, CL_MEM_WRITE_ONLY,
+			sizeof(T) * v.size()
+		};
+	}
 
 private:
 	void InitializeOpenCL()
@@ -53,9 +72,10 @@ private:
 		m_initialized = true;
 	}
 
-	void ExecuteKernel()
+	template <class T>
+	void ExecuteKernel(std::vector<T>& result)
 	{
-		auto args = GetKernelArgs();
+		auto& args = GetKernelArgs();
 		size_t i = 0;
 		for (const auto& [size, value] : args.argValues)
 		{
@@ -63,16 +83,13 @@ private:
 		}
 		for (const auto& buffer : args.inputBuffers)
 		{
-			cl::Buffer buf(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-				sizeof(float) * buffer.size(), (void*)buffer.data());
-			m_kernel.setArg(i++, buf);
+			m_kernel.setArg(i++, buffer);
 		}
 
-		auto& result = args.outputBuffer;
-		cl::Buffer outputBuffer(m_context, CL_MEM_WRITE_ONLY,
-			sizeof(float) * result.size());
+		auto& outputBuffer = args.outputBuffer;
+		m_kernel.setArg(i, outputBuffer);
 
-		m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, args.localSize);
+		m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, cl::NullRange);
 		m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
 			sizeof(float) * result.size(), static_cast<void*>(result.data()));
 		m_queue.finish();
