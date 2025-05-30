@@ -1,4 +1,4 @@
-#include "glfwWindow/GLFWInitializer.h"
+#include "../glfwWindow/GLFWInitializer.h"
 #include "window/Window.h"
 #include <GL/glut.h>
 

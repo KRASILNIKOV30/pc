@@ -35,10 +35,7 @@ public:
 			const char* kernelSource = GetKernelSource();
 			cl_int err;
 			m_program = cl::Program(m_context, kernelSource, true, &err);
-			std::cout << "Context: " << (m_context() != nullptr);
 			cl_int buildErr = m_program.build();
-			size_t availableMem = m_device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>() / 1024 / 1024;
-			std::cout << "availableMem: " << availableMem << std::endl;
 			if (buildErr != CL_SUCCESS)
 			{
 				const auto buildLog = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
@@ -79,9 +76,8 @@ private:
 	{
 		m_device = SelectDevice();
 		std::cout << "Selected device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
-		cl_int err;
-		m_context = cl::Context(m_device, nullptr, nullptr, nullptr, &err);
-		m_queue = cl::CommandQueue(m_context, m_device, 0, &err);
+		m_context = cl::Context(m_device, nullptr, nullptr, nullptr);
+		m_queue = cl::CommandQueue(m_context, m_device, 0);
 		m_initialized = true;
 	}
 
@@ -106,13 +102,11 @@ private:
 		m_queue.finish();
 		if (err != CL_SUCCESS)
 		{
-			//	std::cerr << "Executing error: " << err << "\n";
+			std::cerr << "Executing error: " << err << "\n";
 		}
 		m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
 			sizeof(T) * result.size(), result.data());
 		m_queue.finish();
-
-		// std::cout << result[100].s[0] << result[100].s[1] << result[100].s[2] << std::endl;
 	}
 
 	static cl::Device SelectDevice()

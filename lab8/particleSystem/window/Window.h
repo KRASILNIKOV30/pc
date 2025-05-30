@@ -1,5 +1,5 @@
 #pragma once
-#include "../glfwWindow/BaseWindow.h"
+#include "../../glfwWindow/BaseWindow.h"
 #include "../Model.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glu.h>

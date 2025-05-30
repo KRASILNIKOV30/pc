@@ -1,7 +1,7 @@
 #pragma once
-#include "gpuRunner/GPURunner.h"
-#include "Random.h"
-#include "vector/VectorMath.h"
+#include "../gpuRunner/GPURunner.h"
+#include "../Random.h"
+#include "../vector/VectorMath.h"
 #include <algorithm>
 #include <array>
 #include <functional>
