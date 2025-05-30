@@ -6,9 +6,9 @@
 namespace
 {
 constexpr double FIELD_OF_VIEW = 60 * M_PI / 180.0;
-constexpr int PARTICLES_NUMBER = 5000;
-constexpr double Z_NEAR = 10.0;
-constexpr double Z_FAR = 1000;
+constexpr int PARTICLES_NUMBER = 20'000;
+constexpr double Z_NEAR = 1.0;
+constexpr double Z_FAR = 400;
 
 // Ортонормируем матрицу 4*4 (это должна быть аффинная матрица)
 glm::dmat4x4 Orthonormalize(const glm::dmat4x4& m)

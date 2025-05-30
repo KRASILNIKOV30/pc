@@ -33,7 +33,19 @@ public:
 		{
 			InitializeOpenCL();
 			const char* kernelSource = GetKernelSource();
-			m_program = cl::Program(m_context, kernelSource, true);
+			cl_int err;
+			m_program = cl::Program(m_context, kernelSource, true, &err);
+			std::cout << "Context: " << (m_context() != nullptr);
+			cl_int buildErr = m_program.build();
+			size_t availableMem = m_device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>() / 1024 / 1024;
+			std::cout << "availableMem: " << availableMem << std::endl;
+			if (buildErr != CL_SUCCESS)
+			{
+				const auto buildLog = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
+				std::cerr << "Build log: " << buildErr << std::endl
+						  << buildLog << std::endl;
+				throw std::runtime_error("OpenCL build failed");
+			}
 			m_kernel = { m_program, kernelName.c_str() };
 		}
 
@@ -49,16 +61,16 @@ protected:
 	{
 		return {
 			m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-			sizeof(T) * v.size(), static_cast<void*>(v.data())
+			sizeof(T) * v.size(), v.data()
 		};
 	}
 
 	template <class T>
-	cl::Buffer GetOutputBuffer(std::vector<T> const& v)
+	cl::Buffer GetOutputBuffer(std::vector<T>& v)
 	{
 		return {
-			m_context, CL_MEM_WRITE_ONLY,
-			sizeof(T) * v.size()
+			m_context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+			sizeof(T) * v.size(), v.data()
 		};
 	}
 
@@ -67,8 +79,9 @@ private:
 	{
 		m_device = SelectDevice();
 		std::cout << "Selected device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
-		m_context = cl::Context(m_device);
-		m_queue = cl::CommandQueue(m_context, m_device);
+		cl_int err;
+		m_context = cl::Context(m_device, nullptr, nullptr, nullptr, &err);
+		m_queue = cl::CommandQueue(m_context, m_device, 0, &err);
 		m_initialized = true;
 	}
 
@@ -89,10 +102,17 @@ private:
 		auto& outputBuffer = args.outputBuffer;
 		m_kernel.setArg(i, outputBuffer);
 
-		m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, cl::NullRange);
-		m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
-			sizeof(float) * result.size(), static_cast<void*>(result.data()));
+		auto err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, cl::NullRange);
 		m_queue.finish();
+		if (err != CL_SUCCESS)
+		{
+			//	std::cerr << "Executing error: " << err << "\n";
+		}
+		m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
+			sizeof(T) * result.size(), result.data());
+		m_queue.finish();
+
+		// std::cout << result[100].s[0] << result[100].s[1] << result[100].s[2] << std::endl;
 	}
 
 	static cl::Device SelectDevice()
