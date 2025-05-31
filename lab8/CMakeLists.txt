@@ -40,6 +40,12 @@ add_executable(motion-gpu
         motion/ViewMain.cpp
 )
 
+add_executable(median-gpu
+        gpuRunner/GPURunner.h
+        median/Median.h
+        median/ViewMain.cpp
+)
+
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
@@ -70,6 +76,11 @@ target_link_libraries(radial-gpu
 )
 
 target_link_libraries(motion-gpu
+        ${OpenCL_LIBRARIES}
+        ${wxWidgets_LIBRARIES}
+)
+
+target_link_libraries(median-gpu
         ${OpenCL_LIBRARIES}
         ${wxWidgets_LIBRARIES}
 )
