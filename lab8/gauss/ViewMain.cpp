@@ -27,6 +27,7 @@ public:
 		this->SetSizer(sizer);
 
 		m_slider->Bind(wxEVT_SLIDER, &MyFrame::OnSliderChange, this);
+		m_blur.SetImage(m_originalImage);
 	}
 
 private:
@@ -41,9 +42,8 @@ private:
 		}
 		else
 		{
-			GaussBlur blur(m_originalImage);
-			blur.SetRadius(radius);
-			image = blur.Blur();
+			m_blur.SetRadius(radius);
+			image = m_blur.Blur();
 		}
 
 		m_bitmap->SetBitmap(wxBitmap(image));
@@ -54,6 +54,7 @@ private:
 	wxImage m_originalImage;
 	wxStaticBitmap* m_bitmap;
 	wxSlider* m_slider;
+	GaussBlur m_blur;
 };
 
 class MyApp final : public wxApp
@@ -62,7 +63,7 @@ public:
 	bool OnInit() override
 	{
 		wxImage::AddHandler(new wxPNGHandler());
-		m_frame = new MyFrame;
+		m_frame = new MyFrame();
 		m_frame->Show(true);
 		return true;
 	}

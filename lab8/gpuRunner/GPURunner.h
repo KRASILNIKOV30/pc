@@ -24,17 +24,14 @@ public:
 	GPURunner(const char* kernelSource)
 		: m_kernelSource(kernelSource)
 	{
+		InitializeOpenCL();
+		// Cleanup();
+		BuildProgram();
 	}
 
 	template <class T>
 	void Run(std::string const& kernelName, KernelArgs const& args, std::vector<T>& result)
 	{
-		if (!m_initialized)
-		{
-			InitializeOpenCL();
-			BuildProgram();
-		}
-
 		m_kernel = { m_program, kernelName.c_str() };
 		return ExecuteKernel<T>(args, result);
 	}
@@ -57,13 +54,41 @@ public:
 		};
 	}
 
+	void Cleanup()
+	{
+		try
+		{
+			if (m_queue())
+			{
+				m_queue.finish();
+			}
+			m_kernel = cl::Kernel();
+			// clReleaseProgram(m_program.get());
+			m_program = cl::Program();
+		}
+		catch (...)
+		{
+		}
+	}
+
+	~GPURunner()
+	{
+		// Cleanup();
+		std::vector<cl::Platform> platforms;
+		cl::Platform::get(&platforms);
+		for (auto& platform : platforms)
+		{
+			platform.unloadCompiler();
+		}
+	}
+
 private:
 	void InitializeOpenCL()
 	{
 		m_device = SelectDevice();
 		std::cout << "Selected device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
-		m_context = cl::Context(m_device, nullptr, nullptr, nullptr);
-		m_queue = cl::CommandQueue(m_context, m_device, 0);
+		m_context = cl::Context(m_device);
+		m_queue = cl::CommandQueue(m_context, m_device);
 		m_initialized = true;
 	}
 
@@ -71,7 +96,7 @@ private:
 	{
 		cl_int err;
 		m_program = cl::Program(m_context, m_kernelSource, true, &err);
-		cl_int buildErr = m_program.build();
+		cl_int buildErr = m_program.build("-cl-opt-disable");
 		if (buildErr != CL_SUCCESS)
 		{
 			const auto buildLog = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
@@ -105,7 +130,6 @@ private:
 		m_kernel.setArg(i, outputBuffer);
 
 		auto err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, cl::NullRange);
-		m_queue.finish();
 		if (err != CL_SUCCESS)
 		{
 			std::cerr << "Executing error: " << err << "\n";

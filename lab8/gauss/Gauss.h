@@ -5,43 +5,45 @@
 #include <vector>
 #include <wx/wx.h>
 
-inline const char* BLUR_KERNEL_SOURCE = R"(
+static inline const char* KERNEL_SOURCE = R"(
 __kernel void gauss_blur(
     const int width,
     const int height,
     const int radius,
-    __constant float* gaussKernel,
+    __global float* gaussKernel,
     __global float4* pixels,
     __global float4* result
 ) {
-    int i = get_global_id(0);
+    int idx = get_global_id(0);
 
-    int x = i % width;
-    int y = i / width;
+	if (idx >= width * height) return;
+
+    int x = idx % width;
+    int y = idx / width;
 
     float4 sum = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+	float weightSum = 0.0;
 
     for (int i = -radius; i <= radius; ++i) {
         int px = clamp(x + i, 0, width - 1);
         float weight = gaussKernel[i + radius];
-		float4 pixel = pixels[px + y * width];
-		float4 normalizedPixel = pow(pixel, 2.2f);
-		float4 bluredPixel = normalizedPixel * weight;
-        sum += pow(bluredPixel, 1.0f / 2.2f);
-    }
 
-    result[i] = sum;
+	    int pidx = px + y * width;
+		float4 pixel = pixels[pidx];
+		float4 normalizedPixel = pixel;
+		weightSum += weight;
+		float4 bluredPixel = normalizedPixel * weight;
+		sum += bluredPixel;
+   }
+
+   result[idx] = sum / weightSum;
 }
 )";
 
-class GaussBlur : public GPURunner
+class GaussBlur
 {
 public:
-	~GaussBlur()
-	{
-	}
-
-	GaussBlur(wxImage const& img)
+	void SetImage(wxImage const& img)
 	{
 		m_width = img.GetWidth();
 		m_height = img.GetHeight();
@@ -66,44 +68,37 @@ public:
 		m_radius = radius;
 		const float sigma = static_cast<float>(radius) / 3.29f;
 		m_kernel = GenerateGaussianKernel(m_radius, sigma);
-
-		m_kernelArgs.argValues = std::vector<ArgValue>{
-			{ sizeof(int), &m_width },
-			{ sizeof(int), &m_height },
-			{ sizeof(int), &m_radius }
-		};
-		m_kernelArgs.inputBuffers = {
-			GetInputBuffer(m_kernel),
-			GetInputBuffer(m_pixels)
-		};
-		m_kernelArgs.outputBuffer = GetOutputBuffer(m_pixels);
-		m_kernelArgs.globalSize = cl::NDRange(m_width * m_height);
 	}
 
 	wxImage Blur()
 	{
-		std::vector<cl_float4> vertBlur(m_pixels.size());
-		Run("gauss_blur", vertBlur);
+		m_kernelArgs = KernelArgs();
+		m_kernelArgs.argValues = { m_width, m_height, m_radius };
+		m_kernelArgs.inputBuffers = {
+			m_gpuRunner.GetInputBuffer(m_kernel),
+			m_gpuRunner.GetInputBuffer(m_pixels)
+		};
+		std::vector<cl_float4> horBlur(m_pixels.size());
+		m_kernelArgs.outputBuffer = m_gpuRunner.GetOutputBuffer(horBlur);
+		m_kernelArgs.globalSize = cl::NDRange(m_width * m_height);
 
-		std::swap(m_kernelArgs.argValues[0].value, m_kernelArgs.argValues[1].value);
-		std::vector<cl_float4> transposed(vertBlur.size());
-		for (int i = 0; i < vertBlur.size(); ++i)
-		{
-			const auto x = i % m_width;
-			const auto y = i / m_width;
-			transposed[x * m_height + y] = vertBlur[y * m_width + x];
-		}
+		m_gpuRunner.Run("gauss_blur", m_kernelArgs, horBlur);
+
+		std::swap(m_kernelArgs.argValues[0], m_kernelArgs.argValues[1]);
+		auto transposed = Transpose(horBlur);
 
 		m_kernelArgs.inputBuffers = {
-			GetInputBuffer(m_kernel),
-			GetInputBuffer(transposed)
+			m_gpuRunner.GetInputBuffer(m_kernel),
+			m_gpuRunner.GetInputBuffer(transposed)
 		};
 
-		std::vector<cl_float4> horBlur(m_pixels.size());
-		Run("gauss_blur", horBlur);
+		std::vector<cl_float4> vertBlur(m_pixels.size());
+		m_kernelArgs.outputBuffer = m_gpuRunner.GetOutputBuffer(vertBlur);
+		m_gpuRunner.Run("gauss_blur", m_kernelArgs, vertBlur);
+		const auto result = Transpose(horBlur);
 
 		wxImage output(m_width, m_height);
-		for (int i = 0; i < vertBlur.size(); ++i)
+		for (int i = 0; i < horBlur.size(); ++i)
 		{
 			const auto x = i % m_width;
 			const auto y = i / m_width;
@@ -117,15 +112,17 @@ public:
 		return output;
 	}
 
-private:
-	[[nodiscard]] const char* GetKernelSource() const override
+	std::vector<cl_float4> Transpose(std::vector<cl_float4> const& v)
 	{
-		return BLUR_KERNEL_SOURCE;
-	}
+		std::vector<cl_float4> transposed(v.size());
+		for (int i = 0; i < v.size(); ++i)
+		{
+			const auto x = i % m_width;
+			const auto y = i / m_width;
+			transposed[x * m_height + y] = v[y * m_width + x];
+		}
 
-	KernelArgs& GetKernelArgs() override
-	{
-		return m_kernelArgs;
+		return transposed;
 	}
 
 private:
@@ -135,4 +132,5 @@ private:
 	int m_height;
 	int m_radius{};
 	std::vector<float> m_kernel;
+	GPURunner m_gpuRunner{ KERNEL_SOURCE };
 };
