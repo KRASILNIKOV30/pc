@@ -85,24 +85,24 @@ public:
 		m_gpuRunner.Run("gauss_blur", m_kernelArgs, horBlur);
 
 		std::swap(m_kernelArgs.argValues[0], m_kernelArgs.argValues[1]);
-		auto transposed = Transpose(horBlur);
+		auto transposed = Transpose(horBlur, m_width, m_height);
 
 		m_kernelArgs.inputBuffers = {
 			m_gpuRunner.GetInputBuffer(m_kernel),
 			m_gpuRunner.GetInputBuffer(transposed)
 		};
 
-		std::vector<cl_float4> vertBlur(m_pixels.size());
+		std::vector<cl_float4> vertBlur(transposed.size());
 		m_kernelArgs.outputBuffer = m_gpuRunner.GetOutputBuffer(vertBlur);
 		m_gpuRunner.Run("gauss_blur", m_kernelArgs, vertBlur);
-		const auto result = Transpose(horBlur);
+		const auto result = Transpose(vertBlur, m_height, m_width);
 
 		wxImage output(m_width, m_height);
-		for (int i = 0; i < horBlur.size(); ++i)
+		for (int i = 0; i < result.size(); ++i)
 		{
 			const auto x = i % m_width;
 			const auto y = i / m_width;
-			auto& pixel = horBlur[x + y * m_width];
+			auto& pixel = result[x + y * m_width];
 			output.SetRGB(x, y,
 				static_cast<unsigned char>(pixel.s[0] * 255),
 				static_cast<unsigned char>(pixel.s[1] * 255),
@@ -112,14 +112,14 @@ public:
 		return output;
 	}
 
-	std::vector<cl_float4> Transpose(std::vector<cl_float4> const& v)
+	std::vector<cl_float4> Transpose(std::vector<cl_float4> const& v, int width, int height)
 	{
 		std::vector<cl_float4> transposed(v.size());
 		for (int i = 0; i < v.size(); ++i)
 		{
-			const auto x = i % m_width;
-			const auto y = i / m_width;
-			transposed[x * m_height + y] = v[y * m_width + x];
+			const auto x = i % width;
+			const auto y = i / width;
+			transposed[x * height + y] = v[y * width + x];
 		}
 
 		return transposed;
