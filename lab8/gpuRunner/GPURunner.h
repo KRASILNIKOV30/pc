@@ -129,17 +129,18 @@ private:
 		auto& outputBuffer = args.outputBuffer;
 		m_kernel.setArg(i, outputBuffer);
 
-		auto err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, cl::NullRange);
-		if (err != CL_SUCCESS)
-		{
-			std::cerr << "Executing error: " << err << "\n";
-		}
-		err = m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
+		auto executeErr = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, args.globalSize, cl::NullRange);
+		auto readErr = m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
 			sizeof(T) * result.size(), result.data());
 		m_queue.finish();
-		if (err != CL_SUCCESS)
+
+		if (executeErr != CL_SUCCESS)
 		{
-			std::cerr << "Error while read buffer: " << err << "\n";
+			std::cerr << "Executing error: " << executeErr << "\n";
+		}
+		if (readErr != CL_SUCCESS)
+		{
+			std::cerr << "Error while read buffer: " << readErr << "\n";
 		}
 	}
 

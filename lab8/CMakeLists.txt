@@ -28,6 +28,12 @@ add_executable(gauss-gpu
         gauss/ViewMain.cpp
 )
 
+add_executable(radial-gpu
+        gpuRunner/GPURunner.h
+        radial/Radial.h
+        radial/ViewMain.cpp
+)
+
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
@@ -48,6 +54,11 @@ target_link_libraries(particle-system
 )
 
 target_link_libraries(gauss-gpu
+        ${OpenCL_LIBRARIES}
+        ${wxWidgets_LIBRARIES}
+)
+
+target_link_libraries(radial-gpu
         ${OpenCL_LIBRARIES}
         ${wxWidgets_LIBRARIES}
 )
