@@ -5,13 +5,10 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
-struct ArgValue
-{
-	size_t size;
-	void* value;
-};
+using ArgValue = std::variant<float, int>;
 
 struct KernelArgs
 {
@@ -24,34 +21,23 @@ struct KernelArgs
 class GPURunner
 {
 public:
-	virtual ~GPURunner() = default;
+	GPURunner(const char* kernelSource)
+		: m_kernelSource(kernelSource)
+	{
+	}
 
 	template <class T>
-	void Run(std::string const& kernelName, std::vector<T>& result)
+	void Run(std::string const& kernelName, KernelArgs const& args, std::vector<T>& result)
 	{
 		if (!m_initialized)
 		{
 			InitializeOpenCL();
-			const char* kernelSource = GetKernelSource();
-			cl_int err;
-			m_program = cl::Program(m_context, kernelSource, true, &err);
-			cl_int buildErr = m_program.build();
-			if (buildErr != CL_SUCCESS)
-			{
-				const auto buildLog = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
-				std::cerr << "Build log: " << buildErr << std::endl
-						  << buildLog << std::endl;
-				throw std::runtime_error("OpenCL build failed");
-			}
-			m_kernel = { m_program, kernelName.c_str() };
+			BuildProgram();
 		}
 
-		ExecuteKernel<T>(result);
+		m_kernel = { m_program, kernelName.c_str() };
+		return ExecuteKernel<T>(args, result);
 	}
-
-protected:
-	[[nodiscard]] virtual const char* GetKernelSource() const = 0;
-	virtual KernelArgs& GetKernelArgs() = 0;
 
 	template <class T>
 	cl::Buffer GetInputBuffer(std::vector<T>& v)
@@ -81,14 +67,34 @@ private:
 		m_initialized = true;
 	}
 
-	template <class T>
-	void ExecuteKernel(std::vector<T>& result)
+	void BuildProgram()
 	{
-		auto& args = GetKernelArgs();
-		size_t i = 0;
-		for (const auto& [size, value] : args.argValues)
+		cl_int err;
+		m_program = cl::Program(m_context, m_kernelSource, true, &err);
+		cl_int buildErr = m_program.build();
+		if (buildErr != CL_SUCCESS)
 		{
-			m_kernel.setArg(i++, size, value);
+			const auto buildLog = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
+			std::cerr << "Build log: " << buildErr << std::endl
+					  << buildLog << std::endl;
+			throw std::runtime_error("OpenCL build failed");
+		}
+	}
+
+	template <class T>
+	void ExecuteKernel(KernelArgs const& args, std::vector<T>& result)
+	{
+		size_t i = 0;
+		for (const auto& value : args.argValues)
+		{
+			if (holds_alternative<float>(value))
+			{
+				m_kernel.setArg(i++, get<float>(value));
+			}
+			else
+			{
+				m_kernel.setArg(i++, get<int>(value));
+			}
 		}
 		for (const auto& buffer : args.inputBuffers)
 		{
@@ -104,9 +110,13 @@ private:
 		{
 			std::cerr << "Executing error: " << err << "\n";
 		}
-		m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
+		err = m_queue.enqueueReadBuffer(outputBuffer, CL_TRUE, 0,
 			sizeof(T) * result.size(), result.data());
 		m_queue.finish();
+		if (err != CL_SUCCESS)
+		{
+			std::cerr << "Error while read buffer: " << err << "\n";
+		}
 	}
 
 	static cl::Device SelectDevice()
@@ -136,5 +146,6 @@ private:
 	cl::CommandQueue m_queue;
 	cl::Program m_program;
 	cl::Kernel m_kernel;
+	const char* m_kernelSource;
 	bool m_initialized = false;
 };

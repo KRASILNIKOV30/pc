@@ -1,5 +1,5 @@
 #pragma once
-#include <cmath>
+#include <math.h>
 #include <vector>
 
 inline std::vector<float> GenerateGaussianKernel(const int radius, const float sigma)

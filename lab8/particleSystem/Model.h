@@ -48,32 +48,24 @@ constexpr float BOUNDARY = 50.0;
 constexpr float MIN_WEIGHT = 1.0;
 constexpr float MAX_WEIGHT = 10.0;
 constexpr float SUN_WEIGHT = 330'000;
-class Particles final : public GPURunner
+
+class Particles
 {
 public:
-	[[nodiscard]] const char* GetKernelSource() const override
-	{
-		return KERNEL_SOURCE;
-	}
-
-	KernelArgs& GetKernelArgs() override
+	void SetKernelArgs()
 	{
 		m_size = static_cast<int>(m_accelerations.size());
-		m_kernelArgs.argValues = std::vector<ArgValue>{
-			{ sizeof(float), (void*)&m_G },
-			{ sizeof(int), (void*)&m_size }
-		};
+		m_kernelArgs.argValues = { m_G, m_size };
 		m_accelerations.resize(m_size, { 0, 0, 0 });
-		m_kernelArgs.inputBuffers = { GetInputBuffer(m_positions) };
-		m_kernelArgs.outputBuffer = GetOutputBuffer(m_accelerations);
+		m_kernelArgs.inputBuffers = { m_gpuRunner.GetInputBuffer(m_positions) };
+		m_kernelArgs.outputBuffer = m_gpuRunner.GetOutputBuffer(m_accelerations);
 		m_kernelArgs.globalSize = cl::NDRange(m_size);
-
-		return m_kernelArgs;
 	}
 
 	void Update(double deltaTime)
 	{
-		Run("compute_gravity", m_accelerations);
+		SetKernelArgs();
+		m_gpuRunner.Run("compute_gravity", m_kernelArgs, m_accelerations);
 
 		const float scaledDelta = static_cast<float>(deltaTime) * m_timeCoef;
 		for (int i = 0; i < m_accelerations.size(); ++i)
@@ -170,5 +162,6 @@ private:
 	float m_timeCoef = 1.0;
 	float m_G = 6.67430e-11;
 	KernelArgs m_kernelArgs = {};
+	GPURunner m_gpuRunner{ KERNEL_SOURCE };
 	int m_size;
 };
