@@ -96,7 +96,7 @@ private:
 	{
 		cl_int err;
 		m_program = cl::Program(m_context, m_kernelSource, true, &err);
-		cl_int buildErr = m_program.build("-cl-opt-disable");
+		cl_int buildErr = m_program.build();
 		if (buildErr != CL_SUCCESS)
 		{
 			const auto buildLog = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);

@@ -20,7 +20,7 @@ __kernel void median_filter(
     int y = idx / width;
 
     int samples = 0;
-    float4 window[400]; // Максимальный размер окна (20x20)
+    float4 window[400];
 
     for (int dy = -radius; dy <= radius; ++dy) {
         for (int dx = -radius; dx <= radius; ++dx) {

@@ -35,11 +35,11 @@ __kernel void motion_blur(
         int sampleY = clamp((int)samplePos.y, 0, height - 1);
 
         int sampleIdx = sampleY * width + sampleX;
-        sum += pixels[sampleIdx];
+        sum += pow(pixels[sampleIdx], 2.2f);
         validSamples++;
     }
 
-    result[idx] = sum / (float)validSamples;
+    result[idx] = pow(sum / (float)validSamples, 1.0f / 2.2f);
 }
 )";
 

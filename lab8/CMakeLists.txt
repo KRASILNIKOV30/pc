@@ -46,10 +46,19 @@ add_executable(median-gpu
         median/ViewMain.cpp
 )
 
+add_executable(bitonic-sort
+        gpuRunner/GPURunner.h
+        bitonicSort/BitonicSorter.h
+        bitonicSort/main.cpp
+        Random.h
+        ../lib/timer/Timer.h
+)
+
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenCL REQUIRED)
+find_package(TBB REQUIRED)
 
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 if (wxWidgets_USE_FILE)
@@ -82,5 +91,11 @@ target_link_libraries(motion-gpu
 
 target_link_libraries(median-gpu
         ${OpenCL_LIBRARIES}
+        ${wxWidgets_LIBRARIES}
+)
+
+target_link_libraries(bitonic-sort
+        ${OpenCL_LIBRARIES}
+        TBB::tbb
         ${wxWidgets_LIBRARIES}
 )
