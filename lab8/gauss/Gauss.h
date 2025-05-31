@@ -5,6 +5,9 @@
 #include <vector>
 #include <wx/wx.h>
 
+// Один раз выполнять гамма корекцию
+// транспонирование на gpu
+// локальная группа размером с ядро
 static inline const char* KERNEL_SOURCE = R"(
 __kernel void gauss_blur(
     const int width,

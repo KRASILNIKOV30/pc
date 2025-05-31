@@ -6,7 +6,7 @@
 namespace
 {
 constexpr double FIELD_OF_VIEW = 60 * M_PI / 180.0;
-constexpr int PARTICLES_NUMBER = 3'000;
+constexpr int PARTICLES_NUMBER = 10'000;
 constexpr double Z_NEAR = 1.0;
 constexpr double Z_FAR = 400;
 

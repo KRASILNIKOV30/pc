@@ -30,8 +30,14 @@ add_executable(gauss-gpu
 
 add_executable(radial-gpu
         gpuRunner/GPURunner.h
-        radial/Radial.h
+        motion/Motion.h
         radial/ViewMain.cpp
+)
+
+add_executable(motion-gpu
+        gpuRunner/GPURunner.h
+        motion/Motion.h
+        motion/ViewMain.cpp
 )
 
 find_package(glfw3 REQUIRED)
@@ -59,6 +65,11 @@ target_link_libraries(gauss-gpu
 )
 
 target_link_libraries(radial-gpu
+        ${OpenCL_LIBRARIES}
+        ${wxWidgets_LIBRARIES}
+)
+
+target_link_libraries(motion-gpu
         ${OpenCL_LIBRARIES}
         ${wxWidgets_LIBRARIES}
 )
