@@ -30,13 +30,12 @@ __kernel void gauss_blur(
 
 	    int pidx = px + y * width;
 		float4 pixel = pixels[pidx];
-		float4 normalizedPixel = pixel;
 		weightSum += weight;
-		float4 bluredPixel = normalizedPixel * weight;
+		float4 bluredPixel = pow(pixel, 2.2f) * weight;
 		sum += bluredPixel;
    }
 
-   result[idx] = sum / weightSum;
+   result[idx] = pow(sum / weightSum, 1.0f / 2.2f);
 }
 )";
 

@@ -2,8 +2,8 @@
 #include <memory>
 #include <thread>
 #include <vector>
-#include <wx/wx.h>
 #include <wx/slider.h>
+#include <wx/wx.h>
 
 constexpr int WIDTH = 1200;
 constexpr int HEIGHT = 800;
